@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bear Adventure Game 🐻</title>
+  <meta name="viewport" content="width=1000">
+  <style>
+    body {
+      background:#bae6fd;
+      font-family:sans-serif;
+      margin:0;
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh;
+    }
+    .container {
+      background:#fff; border-radius:14px; box-shadow:0 4px 20px #0001;
+      width:950px; height:630px; display:flex; flex-direction:row; overflow:hidden;
+    }
+    .side-panel {
+      background:#e0f2fe; width:320px; padding:24px 12px 0 12px;
+      display: flex; flex-direction: column; align-items:center;
+    }
+    .user-card {
+      background:#f3f9fd; border-radius:8px; padding:18px; margin-bottom:20px; box-shadow:0 1px 5px #0001; width:95%;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .timer {color:#be123c; font-weight:bold; font-size:36px;}
+    .score {margin-top:5px; color:#089345; font-weight:bold; font-size:18px;}
+    .question {background:#fef9c3; border-radius:10px; padding:15px 10px; margin:0 3px; margin-top:3px;}
+    .question-title {font-weight:bold; font-size:20px; margin-bottom:4px;}
+    .options button {
+      display:block; margin:10px 0; padding:10px 15px; width:98%;
+      background:#fff; border:2px solid #fde047; border-radius:7px;
+      text-align:left; font-weight:600; font-size:17px; cursor:pointer;
+      transition:background 0.18s, border 0.18s;
+    }
+    .options button:hover {background:#fdffe0; border-color:#fed203;}
+    .instructions {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      min-height:270px; background:#ecfeff;
+      border-radius:10px; padding:30px 8px; margin-top:15px; color:#47737a;
+      font-size:17px; font-weight:500;
+    }
+    .win { color:#0af03f; font-weight:bold; font-size:20px; }
+    .timeout { color:#c6232b; font-weight:bold; font-size:20px; }
+    /* Board styles */
+    .game-area { flex:1; display:flex; align-items:center; justify-content:center; background:#86efac; position:relative;}
+    .grid { display:grid; gap:5px; background:#bef264; border-radius:12px;
+            box-shadow:0 1px 10px #0002; padding: 10px;}
+    .cell { width:54px; height:54px; display:flex; align-items:center;
+            justify-content:center; font-size:28px; border-radius:8px;}
+    .rock { background:#d1d5db;}
+    .question-cell{ background:#bbf7d0; border:2px solid #15803d;}
+    .bear { background:#fef9c3; border:2px solid #eab308; box-shadow:0 1px 5px #222;}
+    .pot { background:#fde68a; border:2px solid #b45309;}
+    .empty {background:#fff;}
+    .tree-row { position:absolute; left:11px;}
+    .tree-row.top {top:-38px;}
+    .tree-row.bottom {bottom:-35px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="side-panel">
+      <div class="user-card">
+        <div style="font-weight:bold;color:#222; font-size:18px">🐻 Người chơi</div>
+        <div style="color:#64748b;font-size:15px;">Thời gian còn</div>
+        <div class="timer" id="timer">20:00</div>
+        <div class="score" id="score"></div>
+      </div>
+      <div id="question-panel"></div>
+    </div>
+    <div class="game-area">
+      <div class="tree-row top">
+        <span>🌳</span><span>🌳</span><span>🌳</span><span>🌳</span><span>🌳</span><span>🌳</span>
+      </div>
+      <div class="tree-row bottom">
+        <span>🌳</span><span>🌳</span><span>🌳</span><span>🌳</span><span>🌳</span><span>🌳</span>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+<script>
+const BOARD_SIZE = 6;
+const initialBoard = [
+  ["B", "E", "?", "R", "R", "R"],
+  ["E", "R", "?", "R", "?", "E"],
+  ["R", "R", "E", "R", "R", "E"],
+  ["?", "E", "?", "R", "E", "?"],
+  ["E", "R", "R", "?", "E", "R"],
+  ["E", "E", "E", "R", "P", "E"],
+];
+
+const QUESTIONS = [
+  {
+    question: "That's the boy ... parents I met.",
+    options: ["which", "who", "whom", "whose"],
+    answer: "whose"
+  },
+  {
+    question: "I have a friend ... can speak six languages.",
+    options: ["which", "who", "whom", "whose"],
+    answer: "who"
+  },
+  {
+    question: "The car ... I bought was expensive.",
+    options: ["which", "who", "whom", "whose"],
+    answer: "which"
+  },
+  {
+    question: "To ... did you give the book?",
+    options: ["which", "who", "whom", "whose"],
+    answer: "whom"
+  },
+];
+
+let usedQuestions = [];
+let bearPos = [0,0];
+let board = JSON.parse(JSON.stringify(initialBoard));
+let score = 0;
+let gameStatus = "playing"; // 'playing', 'won', 'timeout'
+let timer = 20 * 60;
+let questionActive = null;
+
+function renderBoard() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = "";
+  grid.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 54px)`;
+  grid.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 54px)`;
+  for (let row=0; row<BOARD_SIZE; row++) {
+    for (let col=0; col<BOARD_SIZE; col++) {
+      let cellValue = board[row][col];
+      let cell = document.createElement("div");
+      cell.className = "cell " +
+        (cellValue === "R" ? "rock" : cellValue === "?" ? "question-cell" :
+         cellValue === "B" ? "bear" : cellValue === "P" ? "pot" : "empty");
+      cell.textContent = cellValue === "B" ? "🐻" :
+        cellValue === "R" ? "🪨" :
+        cellValue === "?" ? "?" :
+        cellValue === "P" ? "🍯" : "";
+      grid.appendChild(cell);
+    }
+  }
+  // Update score
+  document.getElementById('score').textContent = "Điểm: " + score;
+}
+
+function showQuestionPanel() {
+  const questionPanel = document.getElementById('question-panel');
+  if (questionActive) {
+    const q = questionActive.question;
+    let html =
+      `<div class="question">
+         <div class="question-title">Câu hỏi</div>
+         <div style="margin-bottom:14px;color:#3f3f3f;">${q.question}</div>
+         <div class="options">`;
+    q.options.forEach(opt => {
+      html += `<button onclick="answerQuestion('${opt}')">${opt}</button>`;
+    });
+    html += "</div></div>";
+    questionPanel.innerHTML = html;
+  } else {
+    let msg = `<div class='instructions'>
+                <span>Dùng phím mũi tên để di chuyển 🐻.</span>
+                <span>Đi vào ô <b>?</b> để trả lời câu hỏi!</span>`;
+    if (gameStatus === "won")
+      msg += "<span class='win'>Bạn đã thắng! 🏆🍯</span>";
+    if (gameStatus === "timeout")
+      msg += "<span class='timeout'>Hết giờ! ⏱️</span>";
+    msg += "</div>";
+    questionPanel.innerHTML = msg;
+  }
+}
+
+function getNextQuestion() {
+  for (let i = 0; i < QUESTIONS.length; ++i) {
+    if (!usedQuestions.includes(i)) return {q: QUESTIONS[i], idx: i};
+  }
+  // Nếu hết câu hỏi thì quay vòng lại
+  return {q: QUESTIONS[0], idx: 0};
+}
+
+function startGame() {
+  document.addEventListener("keydown", (e) => {
+    if (gameStatus !== "playing" || questionActive) return;
+    if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) return;
+    let [r,c]=bearPos, next=[r,c];
+    if(e.key==="ArrowRight") next=[r,c+1];
+    if(e.key==="ArrowLeft")  next=[r,c-1];
+    if(e.key==="ArrowDown")  next=[r+1,c];
+    if(e.key==="ArrowUp")    next=[r-1,c];
+    if(next[0]<0||next[0]>=BOARD_SIZE||next[1]<0||next[1]>=BOARD_SIZE) return;
+    let cell=board[next[0]][next[1]];
+    if(cell==="R") return;
+    if(cell==="P") {
+      board[r][c]="E"; board[next[0]][next[1]]="B";
+      bearPos=[next[0],next[1]];
+      renderBoard(); showQuestionPanel();
+      gameStatus="won";
+      showQuestionPanel();
+      return;
+    }
+    if(cell==="?") {
+      let nq = getNextQuestion();
+      questionActive = { row: next[0], col: next[1], question: nq.q, qidx: nq.idx };
+      showQuestionPanel();
+    } else {
+      board[r][c]="E"; board[next[0]][next[1]]="B";
+      bearPos=[next[0],next[1]];
+      renderBoard(); showQuestionPanel();
+    }
+  });
+  renderBoard();
+  showQuestionPanel();
+  updateTimer();
+  setInterval(() => {
+    if (gameStatus !== "playing") return;
+    if (--timer < 0) {
+      gameStatus = "timeout";
+      showQuestionPanel();
+    }
+    updateTimer();
+  }, 1000);
+}
+window.answerQuestion = function(opt) {
+  if (!questionActive) return;
+  if (opt === questionActive.question.answer) score++;
+  // Di chuyển bear vào vị trí ?
+  const {row,col,qidx}=questionActive;
+  board[bearPos[0]][bearPos[1]] = "E";
+  board[row][col] = "B";
+  usedQuestions.push(qidx);
+  bearPos=[row,col];
+  questionActive=null;
+  renderBoard(); showQuestionPanel();
+}
+
+function updateTimer() {
+  let t = timer > 0 ? timer : 0;
+  const m = Math.floor(t/60).toString().padStart(2,"0");
+  const s = (t%60).toString().padStart(2,"0");
+  document.getElementById('timer').textContent =`${m}:${s}`;
+}
+
+// Run
+startGame();
+</script>
+</body>
+</html>
