@@ -2,23 +2,58 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Game Tài Xế Giao Hàng - Một Pickup Mỗi Lần</title>
+  <title>Game Tài Xế Giao Hàng - Câu hỏi luôn giữ lại sau khi trả lời</title>
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #a5dff9; margin: 0;}
     .container { display: flex; margin-top: 16px; }
-    .game-info { background: #fffbe8; border-radius: 15px; box-shadow: 0 2px 8px #9996; padding: 12px 18px; min-width: 216px; text-align: center; line-height: 1.5;}
+    .game-info { background: #fffbe8; border-radius: 15px; box-shadow: 0 2px 8px #9996; padding: 12px 18px; min-width: 240px; text-align: center; line-height: 1.5;}
     .score, .lives, .question-level { font-weight: bold; font-size: 18px; }
-    .question-box { min-height: 54px; margin: 9px 0; border: 2px dashed #66c; border-radius: 7px; background: #f7f7fc; padding: 5px;}
-    .cell { border: 1px solid #b3d6ad; background: #eaffed; height: 36px; width: 36px; position: relative; display: flex; justify-content: center; align-items: center;}
+    .question-box { min-height: 54px; margin: 9px 0; border: 2px dashed #66c; border-radius: 7px; background: #f7f7fc; padding: 7px;}
+    .answer-list {margin:0; padding-left:0; list-style-type:none; text-align:left;}
+    .answer-list li {
+      background: #e2faff;
+      border-radius: 6px;
+      margin: 6px 0 6px 0;
+      padding: 7px 10px;
+      border-left: 5px solid #33befd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .answer-tag {
+      background: #f6e741;
+      font-weight:bold;
+      font-size: 1.1em;
+      color: #6b4c00;
+      border-radius:6px;
+      padding: 4px 10px;
+      margin-right: 7px;
+      min-width: 28px;
+      text-align:center;
+      box-shadow: 1px 1px 2px #dd4;
+    }
+    .answer-coord {
+      color: #227a24;
+      font-weight: bold;
+      font-size: .98em;
+      background: #eaffed;
+      border-radius: 4px;
+      padding: 3px 8px;
+      margin-left: 9px;
+    }
+    .cell { border: 1px solid #b3d6ad; background: #eaffed; height: 36px; width: 36px; position: relative; display: flex; justify-content: center; align-items: center; }
     .grid { display: grid; grid-template-columns: repeat(12, 36px); grid-template-rows: repeat(12, 36px); background: #9fd8aa; border: 5px solid #427837; border-radius: 11px; box-shadow: 0 5px 16px #094d19ab; position: relative;}
-    .driver { font-size: 1.4rem; z-index:2; }
+    .driver { font-size: 1.4rem; z-index:2;}
     .pickup, .pickup.active { font-size: 1.2rem; font-weight: bold; border-radius: 8px; background: #fffbab; border: 2px solid #f5e63f; width: 28px; height: 28px; display: flex;align-items:center;justify-content:center;}
     .pickup.active { background: #fff288; border:2px solid #ff8500; box-shadow: 0 0 8px #fff50e;}
     .dropoff, .dropoff.active { font-size: 1.2rem; font-weight: bold; border-radius: 8px; background: #eacfa5; border: 2px solid #8b5702; width: 28px; height: 28px; display: flex;align-items:center;justify-content:center;}
     .dropoff.active { background: #ffe6c2; border:2px solid #da6b11; box-shadow: 0 0 8px #fff50e;}
     .birthday { background: #ffe0ee; color: #f13b8f; border-radius: 8px; width: 28px; height: 28px; font-size: 1.2rem; display: flex;align-items:center;justify-content:center; border: 2px solid #e34290;}
     .inactive { background: #888; color: #fff; border-radius: 12px; width: 28px; height: 28px; font-size: 1rem; opacity: .7;display: flex;align-items:center;justify-content:center;}
-    .answer-building { background: #f3e87e !important; border:2px solid #f1cd20 !important; cursor:pointer;}
+    .answer-building { background: #fffce0 !important; border:2px solid #b3a500 !important;}
+    .answer-code-A:after{content:"A"; display:inline-block; position:absolute; left:1px; bottom:1px; color:#fff;background:#f6e741;font-weight:700;border-radius:50%;width:19px;height:19px;text-align:center;line-height:19px;font-size:.98em;}
+    .answer-code-B:after{content:"B"; display:inline-block; position:absolute; left:1px; bottom:1px; color:#fff;background:#ffba10;font-weight:700;border-radius:50%;width:19px;height:19px;text-align:center;line-height:19px;font-size:.98em;}
+    .answer-code-C:after{content:"C"; display:inline-block; position:absolute; left:1px; bottom:1px; color:#fff;background:#28d857;font-weight:700;border-radius:50%;width:19px;height:19px;text-align:center;line-height:19px;font-size:.98em;}
     .chosen-wrong { background: #fcb4b4 !important; border:2px solid #b21d1d !important;}
     .obstacle {background: #bbb url('https://cdn-icons-png.flaticon.com/128/616/616433.png') center/24px 24px no-repeat; border-radius: 6px;}
     .msg { color: #1b2b3a; font-size: 17px; min-height: 27px;}
@@ -38,7 +73,7 @@
       <div class="question-level">Độ khó: 1</div>
       <hr>
       <div class="question-box"></div>
-      <div class="question-answers"></div>
+      <ul class="answer-list"></ul>
       <div class="msg"></div>
       <hr>
       <div class="controller">
@@ -89,18 +124,18 @@ let questions = [
   {question:'Tòa nhà Landmark 81 thuộc quận nào?',options:['Bình Thạnh', 'Quận 1', 'Quận 3'],correct:'Bình Thạnh',level:5},
   {question:'Bến xe miền Tây thuộc quận/huyện nào?',options:['Bình Tân', 'Quận 8', 'Bình Chánh'],correct:'Bình Tân',level:5}
 ];
+const ANSWER_LABELS = ['A', 'B', 'C'];
 
-// --- TRẠNG THÁI GAME ---
 let gridArr = [];
 let score=0, difficulty = 1, currQuestion = null, currAnswers = [];
 let currAnswerBuildings = [];
+let answerMetaList = [];
 let inactiveBuildings = [];
-let activeBuildingIndex = 0; // index tòa nhà mục tiêu!
+let activeBuildingIndex = 0;
 let driverPos = { x: BUILDINGS[0].x, y: BUILDINGS[0].y };
 let lockAction = false, gameOver = false, gameWin = false;
 let lastChosenCell = null;
 
-// --- GRID & UI ---
 function createGridArr() {
   gridArr = [];
   for (let y = 0; y < ROWS; y++) {
@@ -112,7 +147,8 @@ function createGridArr() {
         isInactive: false, isBirthday: false,
         isObstacle: false,
         isAnswer: false, answerText: null,
-        isDone: false, isActive: false // highlight điểm pickup mục tiêu!
+        isDone: false, isActive: false,
+        answerCode: null
       });
     }
     gridArr.push(row);
@@ -136,7 +172,8 @@ function drawGrid() {
       if(cell.isObstacle) classes += " obstacle";
       else if (cell.isAnswer) {
         classes += " answer-building";
-        html = `<div><span title="Đáp án">${cell.answerText}</span></div>`;
+        if(cell.answerCode) classes += " answer-code-" + cell.answerCode;
+        html = `<div><span title="Đáp án">${cell.answerText?cell.answerText:""}</span></div>`;
         if(lastChosenCell && lastChosenCell.x === x && lastChosenCell.y === y)
             classes += " chosen-wrong";
       }
@@ -157,7 +194,7 @@ function updateInfo() {
 }
 function hideQuestion() {
   document.querySelector('.question-box').innerText = '';
-  document.querySelector('.question-answers').innerHTML = '';
+  document.querySelector('.answer-list').innerHTML = '';
   document.querySelector('.msg').innerText = '';
 }
 function showMsg(t,msg) {
@@ -165,7 +202,6 @@ function showMsg(t,msg) {
   if(t>0) setTimeout(()=>document.querySelector('.msg').innerText='',t);
 }
 
-// --- LOGIC DI CHUYỂN ---
 function move(dx,dy) {
   if(gameOver || gameWin || lockAction) return;
   let nx = driverPos.x + dx, ny = driverPos.y + dy;
@@ -188,35 +224,26 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowRight') move(1,0);
 });
 
-function getActiveBuilding() {
-  return BUILDINGS[activeBuildingIndex];
-}
-function getActiveCell() {
-  let pt = getActiveBuilding();
-  return gridArr[pt.y][pt.x];
-}
+function getActiveBuilding() { return BUILDINGS[activeBuildingIndex]; }
+function getActiveCell() { let pt = getActiveBuilding(); return gridArr[pt.y][pt.x]; }
 
 function checkCell() {
   let cell = gridArr[driverPos.y][driverPos.x];
-  // Đến toà đáp án
   if (cell.isAnswer && currAnswerBuildings.length>0 && !lockAction) {
     answerBuildingAction(cell);
     return;
   }
-  // Thắng game!
   if (cell.isBirthday) {
     setTimeout(()=>showEnd('game-win'),400);
     return;
   }
-  // Đến đúng pickup/drop-off mục tiêu!
   if ((cell.isActive && !cell.isInactive && !cell.isDone && currAnswerBuildings.length==0 && !lockAction)) {
     createAnswerBuildings(cell);
     drawGrid();
-    hideQuestion();
     showQuestionBox();
     return;
   }
-  hideQuestion();
+  // Giữ nguyên câu hỏi hiện tại cho đến khi round mới bắt đầu (sau khi check xong đáp án)
 }
 
 function shuffle(arr) {
@@ -239,13 +266,13 @@ function randomOtherBuildings_exc(excl=[]) {
 }
 
 function createAnswerBuildings(triggerCell) {
-  // Lấy câu hỏi
   currQuestion = questions.filter(q=>q.level>=difficulty&&!q.used)[0]||questions[Math.floor(Math.random()*questions.length)];
   if(currQuestion && currQuestion.used !== undefined) currQuestion.used=true;
-  // Chọn 3 tòa
+
   let opts = shuffle(currQuestion.options.slice());
   currAnswers = opts;
   currAnswerBuildings = [];
+  answerMetaList = [];
   let answerPos = [];
   for(let i=0;i<3;i++) {
     let buildingsAvailable = BUILDINGS
@@ -255,25 +282,50 @@ function createAnswerBuildings(triggerCell) {
     if(buildingsAvailable.length>0) tgt = buildingsAvailable.shift();
     else if (extra) tgt = extra;
     else continue;
-    gridArr[tgt.y][tgt.x].isAnswer = true;
-    gridArr[tgt.y][tgt.x].answerText = currAnswers[i];
-    gridArr[tgt.y][tgt.x].isChosen = false;
+    let ansCode = ['A','B','C'][i];
+    let tgtCell = gridArr[tgt.y][tgt.x];
+    tgtCell.isAnswer = true;
+    tgtCell.answerText = currAnswers[i];
+    tgtCell.isChosen = false;
+    tgtCell.answerCode = ansCode;
     answerPos.push({x:tgt.x,y:tgt.y});
-    currAnswerBuildings.push({x:tgt.x,y:tgt.y,answer:currAnswers[i]});
+    currAnswerBuildings.push({x:tgt.x,y:tgt.y,answer:currAnswers[i],code:ansCode});
+    answerMetaList.push({
+      code: ansCode,
+      answer: currAnswers[i],
+      x: tgt.x,
+      y: tgt.y
+    });
   }
 }
+
 function removeAnswerBuildings() {
   currAnswerBuildings.forEach(pt=>{
     let cell = gridArr[pt.y][pt.x];
-    cell.isAnswer = false; cell.answerText = null; cell.isChosen = false;
+    cell.isAnswer = false; cell.answerText = null; cell.isChosen = false; cell.answerCode = null;
   });
   currAnswerBuildings = [];
 }
+
 function showQuestionBox() {
   let qbox = document.querySelector('.question-box');
-  qbox.innerText = currQuestion.question + "\n(Hãy di chuyển đến 1 toà nhà đáp án!)";
-  document.querySelector('.question-answers').innerHTML = '';
+  qbox.innerText = currQuestion.question + "\n(Hãy di chuyển đến 1 toà nhà đáp án được chỉ định!)";
+  let ul = document.querySelector('.answer-list');
+  ul.innerHTML = '';
+  answerMetaList.forEach(meta=>{
+    let desc = `${meta.code}`;
+    let type = (gridArr[meta.y][meta.x].isPickup||gridArr[meta.y][meta.x].isDropoff) ? "🏠" : "🏡";
+    let li = document.createElement('li');
+    li.innerHTML = `
+      <span class="answer-tag">${desc}</span>
+      <span>${meta.answer}</span>
+      <span class="answer-coord">${type} (${meta.x},${meta.y})</span>
+    `;
+    ul.appendChild(li);
+  });
+  document.querySelector('.msg').innerText = "(Hãy điều khiển tài xế đến đúng vị trí A/B/C!)";
 }
+
 function answerBuildingAction(cell) {
   if(lockAction) return;
   lockAction = true;
@@ -283,43 +335,43 @@ function answerBuildingAction(cell) {
   lastChosenCell = {x:cell.x, y:cell.y};
   if(isRight) {
     score++;
-    // Đánh dấu building này đã done!
     let acell = getActiveCell();
     acell.isDone = true;
     acell.isActive = false;
     difficulty = Math.min(5, difficulty+1);
     document.querySelector('.msg').innerText = "✔️ Đúng! Tiếp tục giao đơn mới.";
-    // Nếu hết pickup/dropoff: thắng
     if((score)>=TOTAL_STOP) {
       let bday = {x: COLS-2, y:1};
       gridArr[bday.y][bday.x].isBirthday = true;
       lockAction = false;
     } else {
-      // Chỉ định building tiếp theo đang còn hoạt động
       nextActiveBuilding();
     }
   } else {
-    // Nếu tòa này là tòa cố định thì bị vô hiệu hóa
     if(cell.isPickup||cell.isDropoff)
     {
       cell.isInactive=true;
       inactiveBuildings.push({x: cell.x, y: cell.y});
     }
     difficulty = Math.max(1,difficulty-1);
-    showMsg(2000,"❌ Sai! Điểm này bị vô hiệu hóa!");
-    // nếu còn lại 3 tòa thì thua
+    showMsg(1800,"❌ Sai! Điểm này bị vô hiệu hóa!");
     if(inactiveBuildings.length >= TOTAL_STOP-3) {
       setTimeout(()=>showEnd('game-over'),400);
     }
   }
   updateInfo();
+  // KHÔNG xóa bảng câu hỏi —
   setTimeout(()=>{
-    hideQuestion(); lastChosenCell=null; lockAction = false; drawGrid();
-  }, 900);
+    lastChosenCell=null; lockAction = false; drawGrid();
+    // Show lại đúng prompt ở dưới (nếu round mới mới sẽ thay thế)
+    if (!gameOver && !gameWin) {
+      if(currAnswerBuildings.length===0)
+        document.querySelector('.msg').innerText = "(Hãy điều khiển tài xế đến đúng vị trí A/B/C!)";
+    }
+  }, 1100);
 }
 
 function nextActiveBuilding() {
-  // Tìm tòa kế tiếp còn hoạt động
   for(let add=1;add<=BUILDINGS.length;add++) {
     let ni = (activeBuildingIndex+add) % BUILDINGS.length;
     let b = BUILDINGS[ni];
@@ -331,7 +383,6 @@ function nextActiveBuilding() {
   }
 }
 function setActiveBuilding(idx) {
-  // clear cờ active
   for (const b of BUILDINGS) gridArr[b.y][b.x].isActive = false;
   let b = BUILDINGS[idx];
   activeBuildingIndex = idx;
@@ -358,7 +409,7 @@ function gameInit() {
   questions.forEach(q=>q.used=false);
   for(let row of gridArr)
     for(let cell of row)
-      cell.isDone=false, cell.isInactive=false, cell.isBirthday=false, cell.isAnswer=false, cell.answerText=null, cell.isActive=false;
+      cell.isDone=false, cell.isInactive=false, cell.isBirthday=false, cell.isAnswer=false, cell.answerText=null, cell.isActive=false, cell.answerCode=null;
   setActiveBuilding(activeBuildingIndex);
   hideQuestion();
   updateInfo();
