@@ -2,19 +2,20 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Game Tài Xế Giao Hàng - Đáp án ở Toà</title>
+  <title>Game Tài Xế Giao Hàng - Một Pickup Mỗi Lần</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #a5dff9; margin: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #a5dff9; margin: 0;}
     .container { display: flex; margin-top: 16px; }
     .game-info { background: #fffbe8; border-radius: 15px; box-shadow: 0 2px 8px #9996; padding: 12px 18px; min-width: 216px; text-align: center; line-height: 1.5;}
     .score, .lives, .question-level { font-weight: bold; font-size: 18px; }
     .question-box { min-height: 54px; margin: 9px 0; border: 2px dashed #66c; border-radius: 7px; background: #f7f7fc; padding: 5px;}
-    .question-answers { min-height: 29px;}
     .cell { border: 1px solid #b3d6ad; background: #eaffed; height: 36px; width: 36px; position: relative; display: flex; justify-content: center; align-items: center;}
     .grid { display: grid; grid-template-columns: repeat(12, 36px); grid-template-rows: repeat(12, 36px); background: #9fd8aa; border: 5px solid #427837; border-radius: 11px; box-shadow: 0 5px 16px #094d19ab; position: relative;}
     .driver { font-size: 1.4rem; z-index:2; }
-    .pickup { font-size: 1.2rem; font-weight: bold; border-radius: 8px; background: #fffbab; border: 2px solid #f5e63f; width: 28px; height: 28px; display: flex;align-items:center;justify-content:center;}
-    .dropoff { font-size: 1.2rem; font-weight: bold; border-radius: 8px; background: #eacfa5; border: 2px solid #8b5702; width: 28px; height: 28px; display: flex;align-items:center;justify-content:center;}
+    .pickup, .pickup.active { font-size: 1.2rem; font-weight: bold; border-radius: 8px; background: #fffbab; border: 2px solid #f5e63f; width: 28px; height: 28px; display: flex;align-items:center;justify-content:center;}
+    .pickup.active { background: #fff288; border:2px solid #ff8500; box-shadow: 0 0 8px #fff50e;}
+    .dropoff, .dropoff.active { font-size: 1.2rem; font-weight: bold; border-radius: 8px; background: #eacfa5; border: 2px solid #8b5702; width: 28px; height: 28px; display: flex;align-items:center;justify-content:center;}
+    .dropoff.active { background: #ffe6c2; border:2px solid #da6b11; box-shadow: 0 0 8px #fff50e;}
     .birthday { background: #ffe0ee; color: #f13b8f; border-radius: 8px; width: 28px; height: 28px; font-size: 1.2rem; display: flex;align-items:center;justify-content:center; border: 2px solid #e34290;}
     .inactive { background: #888; color: #fff; border-radius: 12px; width: 28px; height: 28px; font-size: 1rem; opacity: .7;display: flex;align-items:center;justify-content:center;}
     .answer-building { background: #f3e87e !important; border:2px solid #f1cd20 !important; cursor:pointer;}
@@ -59,7 +60,6 @@
   </div>
 <script>
 const ROWS = 12, COLS = 12, TOTAL_STOP = 10;
-// Các tòa nhà cố định
 const BUILDINGS = [
   {x: 1, y: 1, type:"pickup"},
   {x: 6, y: 2, type:"dropoff"},
@@ -72,13 +72,11 @@ const BUILDINGS = [
   {x: 2, y: 10, type:"pickup"},
   {x: 9, y: 9, type:"dropoff"}
 ];
-// Chướng ngại vật
 const OBSTACLES = [
   {x:3, y:1},{x:4,y:1},{x:5,y:1},{x:7,y:3},{x:8,y:4},{x:2,y:3},{x:3,y:8},
   {x:0,y:11},{x:1,y:11},{x:2,y:11},{x:8,y:6}, {x:6,y:6}, {x:4,y:9},
   {x:5,y:7}, {x:1, y:8},{x:7,y:11},{x:7,y:10},{x:7,y:9},{x:7,y:8},{x:9,y:0},{x:8,y:0},{x:7,y:0}
 ];
-// Bộ câu hỏi
 let questions = [
   {question:'Đâu là quận trung tâm TP.HCM?',options:['Quận 1','Nhà Bè','Cần Giờ'],correct:'Quận 1',level:1},
   {question:'Chợ Bến Thành nằm ở quận nào?',options:['Quận 1', 'Quận 4', 'Quận 7'], correct:'Quận 1',level:1},
@@ -92,15 +90,17 @@ let questions = [
   {question:'Bến xe miền Tây thuộc quận/huyện nào?',options:['Bình Tân', 'Quận 8', 'Bình Chánh'],correct:'Bình Tân',level:5}
 ];
 
+// --- TRẠNG THÁI GAME ---
 let gridArr = [];
 let score=0, difficulty = 1, currQuestion = null, currAnswers = [];
 let currAnswerBuildings = [];
 let inactiveBuildings = [];
-let doneBuildingCount = 0;
+let activeBuildingIndex = 0; // index tòa nhà mục tiêu!
 let driverPos = { x: BUILDINGS[0].x, y: BUILDINGS[0].y };
-let awaitingAnswer = false, lives = TOTAL_STOP, gameOver = false, gameWin = false;
+let lockAction = false, gameOver = false, gameWin = false;
 let lastChosenCell = null;
 
+// --- GRID & UI ---
 function createGridArr() {
   gridArr = [];
   for (let y = 0; y < ROWS; y++) {
@@ -111,16 +111,16 @@ function createGridArr() {
         isPickup: false, isDropoff: false,
         isInactive: false, isBirthday: false,
         isObstacle: false,
-        isAnswer: false,  // Là toà hiển thị đáp án?
-        answerText: null,
-        isDone: false
+        isAnswer: false, answerText: null,
+        isDone: false, isActive: false // highlight điểm pickup mục tiêu!
       });
     }
     gridArr.push(row);
   }
-  BUILDINGS.forEach(pt => {
+  BUILDINGS.forEach((pt,idx) => {
     if (pt.type == "pickup") gridArr[pt.y][pt.x].isPickup = true;
     if (pt.type == "dropoff") gridArr[pt.y][pt.x].isDropoff = true;
+    gridArr[pt.y][pt.x].buildingIndex = idx;
   });
   OBSTACLES.forEach(pt => { gridArr[pt.y][pt.x].isObstacle = true; });
 }
@@ -133,36 +133,18 @@ function drawGrid() {
       let cell = gridArr[y][x];
       let html = '';
       let classes = "";
-      // Chướng ngại
-      if(cell.isObstacle) {
-        classes += " obstacle";
-      }
-      // Toà đáp án
+      if(cell.isObstacle) classes += " obstacle";
       else if (cell.isAnswer) {
         classes += " answer-building";
         html = `<div><span title="Đáp án">${cell.answerText}</span></div>`;
-        if(lastChosenCell && lastChosenCell.x === x && lastChosenCell.y === y && !cell.isDone && !cell.isInactive && !cell.isPickup && !cell.isDropoff)
+        if(lastChosenCell && lastChosenCell.x === x && lastChosenCell.y === y)
             classes += " chosen-wrong";
       }
-      // Toà nhà disable
-      else if (cell.isInactive) {
-        html = `<div class="inactive" title="Đã vô hiệu hoá">❌</div>`;
-      }
-      // Birthday
-      else if (cell.isBirthday) {
-        html = `<div class="birthday" title="Sinh nhật">🎂</div>`;
-      }
-      // Pickup/Dropoff
-      else if (cell.isPickup) {
-        html = `<div class="pickup" title="Điểm nhận hàng">🏢</div>`;
-      }
-      else if (cell.isDropoff) {
-        html = `<div class="dropoff" title="Điểm giao hàng">🏬</div>`;
-      }
-      // Driver
-      if(driverPos.x === x && driverPos.y === y) {
-        html = `<div class="driver" title="Tài xế">🚚</div>`;
-      }
+      else if (cell.isInactive) html = `<div class="inactive" title="Đã vô hiệu hoá">❌</div>`;
+      else if (cell.isBirthday) html = `<div class="birthday" title="Sinh nhật">🎂</div>`;
+      else if (cell.isPickup) html = `<div class="pickup${cell.isActive?' active':''}" title="${cell.isActive?'Điểm mục tiêu':'Pickup'}">🏢</div>`;
+      else if (cell.isDropoff) html = `<div class="dropoff${cell.isActive?' active':''}" title="${cell.isActive?'Điểm mục tiêu':'Drop-off'}">🏬</div>`;
+      if(driverPos.x === x && driverPos.y === y) html = `<div class="driver" title="Tài xế">🚚</div>`;
       gridDiv.innerHTML += `<div class="cell${classes}">${html}</div>`;
     }
   }
@@ -183,8 +165,9 @@ function showMsg(t,msg) {
   if(t>0) setTimeout(()=>document.querySelector('.msg').innerText='',t);
 }
 
+// --- LOGIC DI CHUYỂN ---
 function move(dx,dy) {
-  if(gameOver || gameWin || awaitingAnswer) return;
+  if(gameOver || gameWin || lockAction) return;
   let nx = driverPos.x + dx, ny = driverPos.y + dy;
   if (nx<0 || nx>=COLS || ny<0 || ny>=ROWS) return;
   let cell = gridArr[ny][nx];
@@ -198,29 +181,36 @@ document.querySelector('.ctrl-down').onclick = ()=>move(0,1);
 document.querySelector('.ctrl-left').onclick = ()=>move(-1,0);
 document.querySelector('.ctrl-right').onclick = ()=>move(1,0);
 document.addEventListener('keydown',e=>{
-  if(gameOver || gameWin || awaitingAnswer) return;
+  if(gameOver || gameWin || lockAction) return;
   if(e.key==='ArrowUp') move(0,-1);
   else if(e.key==='ArrowDown') move(0,1);
   else if(e.key==='ArrowLeft') move(-1,0);
   else if(e.key==='ArrowRight') move(1,0);
 });
 
+function getActiveBuilding() {
+  return BUILDINGS[activeBuildingIndex];
+}
+function getActiveCell() {
+  let pt = getActiveBuilding();
+  return gridArr[pt.y][pt.x];
+}
+
 function checkCell() {
   let cell = gridArr[driverPos.y][driverPos.x];
-  // Nếu đang có 3 tòa đáp án
-  if (cell.isAnswer && awaitingAnswer) {
+  // Đến toà đáp án
+  if (cell.isAnswer && currAnswerBuildings.length>0 && !lockAction) {
     answerBuildingAction(cell);
     return;
   }
-  // Thắng!
+  // Thắng game!
   if (cell.isBirthday) {
     setTimeout(()=>showEnd('game-win'),400);
     return;
   }
-  // Đến tòa nhà: pickup/dropoff (còn active/chưa làm, ko phải tòa đáp án)?
-  if ((cell.isPickup || cell.isDropoff) && !cell.isInactive && !cell.isDone && !awaitingAnswer) {
+  // Đến đúng pickup/drop-off mục tiêu!
+  if ((cell.isActive && !cell.isInactive && !cell.isDone && currAnswerBuildings.length==0 && !lockAction)) {
     createAnswerBuildings(cell);
-    awaitingAnswer = true;
     drawGrid();
     hideQuestion();
     showQuestionBox();
@@ -236,52 +226,42 @@ function shuffle(arr) {
   } return arr;
 }
 function randomOtherBuildings_exc(excl=[]) {
-  // Trả về danh sách các tòa hợp lệ để gán làm nhà đáp án (chưa vô hiệu, chưa là birthday, chưa là cùng chỗ tài xế, chưa từng là toà đáp án đang chờ)
   let excludeSet = excl.map(pt=>pt.x+','+pt.y);
   let eligible = [];
   for(let y=0; y<ROWS; y++)
     for(let x=0; x<COLS; x++) {
       let cell = gridArr[y][x];
       if(cell.isObstacle||cell.isInactive||cell.isBirthday||(driverPos.x===x&&driverPos.y===y)) continue;
-      // Không dùng hai tòa đáp án trùng nhau, ko dùng tòa nhà đã là answer ở câu khác
       if(excludeSet.indexOf(x+','+y)===-1)
         eligible.push(cell);
     }
   return shuffle(eligible);
 }
 
-// Sinh 3 đáp án cho 3 tòa nhà khác nhau
 function createAnswerBuildings(triggerCell) {
+  // Lấy câu hỏi
   currQuestion = questions.filter(q=>q.level>=difficulty&&!q.used)[0]||questions[Math.floor(Math.random()*questions.length)];
   if(currQuestion && currQuestion.used !== undefined) currQuestion.used=true;
-  let qbox = document.querySelector('.question-box');
-  qbox.innerText = currQuestion.question;
   // Chọn 3 tòa
   let opts = shuffle(currQuestion.options.slice());
   currAnswers = opts;
   currAnswerBuildings = [];
-  // Chỉ chọn các tòa nhà khác nhau và chưa bị vô hiệu
-  let answerPos = []; // lưu trữ toạ độ
+  let answerPos = [];
   for(let i=0;i<3;i++) {
-    let usedPos = answerPos.concat(BUILDINGS.map(b=>({x:b.x,y:b.y})));
+    let buildingsAvailable = BUILDINGS
+      .filter(b=>!gridArr[b.y][b.x].isInactive&&!gridArr[b.y][b.x].isAnswer && !(b.x === triggerCell.x && b.y === triggerCell.y));
     let extra = randomOtherBuildings_exc(answerPos)[0];
-    // Để ưu tiên chọn luôn các tòa cố định làm đáp án
-    let mainBuilding = BUILDINGS.slice().filter(b=>!gridArr[b.y][b.x].isInactive&&!gridArr[b.y][b.x].isAnswer && !(b.x === triggerCell.x && b.y === triggerCell.y));
     let tgt;
-    if(mainBuilding.length>0) tgt = mainBuilding.shift();
+    if(buildingsAvailable.length>0) tgt = buildingsAvailable.shift();
     else if (extra) tgt = extra;
     else continue;
-    // Đánh cờ "isAnswer"
     gridArr[tgt.y][tgt.x].isAnswer = true;
     gridArr[tgt.y][tgt.x].answerText = currAnswers[i];
     gridArr[tgt.y][tgt.x].isChosen = false;
     answerPos.push({x:tgt.x,y:tgt.y});
     currAnswerBuildings.push({x:tgt.x,y:tgt.y,answer:currAnswers[i]});
   }
-  drawGrid();
-  awaitingAnswer = true;
 }
-
 function removeAnswerBuildings() {
   currAnswerBuildings.forEach(pt=>{
     let cell = gridArr[pt.y][pt.x];
@@ -289,30 +269,34 @@ function removeAnswerBuildings() {
   });
   currAnswerBuildings = [];
 }
-
 function showQuestionBox() {
   let qbox = document.querySelector('.question-box');
   qbox.innerText = currQuestion.question + "\n(Hãy di chuyển đến 1 toà nhà đáp án!)";
   document.querySelector('.question-answers').innerHTML = '';
 }
-
 function answerBuildingAction(cell) {
-  // Người chơi đã chọn đáp án bằng cách đi đến toà nhà đáp án
+  if(lockAction) return;
+  lockAction = true;
   let answer = cell.answerText;
   let isRight = (answer === currQuestion.correct);
-  // Huỷ các toà nhà đáp án
   removeAnswerBuildings();
   lastChosenCell = {x:cell.x, y:cell.y};
   if(isRight) {
     score++;
-    cell.isDone = true;
+    // Đánh dấu building này đã done!
+    let acell = getActiveCell();
+    acell.isDone = true;
+    acell.isActive = false;
     difficulty = Math.min(5, difficulty+1);
-    doneBuildingCount++;
     document.querySelector('.msg').innerText = "✔️ Đúng! Tiếp tục giao đơn mới.";
-    // Thắng game?
-    if(score>=TOTAL_STOP) {
+    // Nếu hết pickup/dropoff: thắng
+    if((score)>=TOTAL_STOP) {
       let bday = {x: COLS-2, y:1};
       gridArr[bday.y][bday.x].isBirthday = true;
+      lockAction = false;
+    } else {
+      // Chỉ định building tiếp theo đang còn hoạt động
+      nextActiveBuilding();
     }
   } else {
     // Nếu tòa này là tòa cố định thì bị vô hiệu hóa
@@ -323,17 +307,35 @@ function answerBuildingAction(cell) {
     }
     difficulty = Math.max(1,difficulty-1);
     showMsg(2000,"❌ Sai! Điểm này bị vô hiệu hóa!");
-    // Thua game khi còn 3 toà?
+    // nếu còn lại 3 tòa thì thua
     if(inactiveBuildings.length >= TOTAL_STOP-3) {
       setTimeout(()=>showEnd('game-over'),400);
     }
   }
   updateInfo();
-  awaitingAnswer = false;
   setTimeout(()=>{
-    hideQuestion(); lastChosenCell=null;
-    drawGrid();
+    hideQuestion(); lastChosenCell=null; lockAction = false; drawGrid();
   }, 900);
+}
+
+function nextActiveBuilding() {
+  // Tìm tòa kế tiếp còn hoạt động
+  for(let add=1;add<=BUILDINGS.length;add++) {
+    let ni = (activeBuildingIndex+add) % BUILDINGS.length;
+    let b = BUILDINGS[ni];
+    let cell = gridArr[b.y][b.x];
+    if(!cell.isInactive && !cell.isDone) {
+      setActiveBuilding(ni);
+      break;
+    }
+  }
+}
+function setActiveBuilding(idx) {
+  // clear cờ active
+  for (const b of BUILDINGS) gridArr[b.y][b.x].isActive = false;
+  let b = BUILDINGS[idx];
+  activeBuildingIndex = idx;
+  gridArr[b.y][b.x].isActive = true;
 }
 
 function showEnd(type) {
@@ -346,17 +348,18 @@ function showEnd(type) {
     gameWin = true;
   }
 }
-
 function gameInit() {
   createGridArr();
-  score = 0; doneBuildingCount = 0; inactiveBuildings = [];
+  score = 0; inactiveBuildings = [];
+  activeBuildingIndex = 0;
   driverPos = {x: BUILDINGS[0].x, y: BUILDINGS[0].y};
-  lives=TOTAL_STOP;difficulty=1;awaitingAnswer = false;gameWin=gameOver=false;
+  difficulty=1;lockAction = false;gameWin=gameOver=false;
   lastChosenCell = null;
   questions.forEach(q=>q.used=false);
   for(let row of gridArr)
     for(let cell of row)
-      cell.isDone=false, cell.isInactive=false, cell.isBirthday=false, cell.isAnswer=false, cell.answerText=null;
+      cell.isDone=false, cell.isInactive=false, cell.isBirthday=false, cell.isAnswer=false, cell.answerText=null, cell.isActive=false;
+  setActiveBuilding(activeBuildingIndex);
   hideQuestion();
   updateInfo();
   drawGrid();
