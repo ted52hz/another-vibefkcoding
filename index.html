@@ -2,83 +2,818 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Game Tài Xế Giao Hàng - Câu hỏi luôn giữ lại sau khi trả lời</title>
+  <title>🎉 AhaMove 10 Năm - Game Tài Xế Siêu Hạng</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #a5dff9; margin: 0;}
-    .container { display: flex; margin-top: 16px; }
-    .game-info { background: #fffbe8; border-radius: 15px; box-shadow: 0 2px 8px #9996; padding: 12px 18px; min-width: 240px; text-align: center; line-height: 1.5;}
-    .score, .lives, .question-level { font-weight: bold; font-size: 18px; }
-    .question-box { min-height: 54px; margin: 9px 0; border: 2px dashed #66c; border-radius: 7px; background: #f7f7fc; padding: 7px;}
-    .answer-list {margin:0; padding-left:0; list-style-type:none; text-align:left;}
-    .answer-list li {
-      background: #e2faff;
-      border-radius: 6px;
-      margin: 6px 0 6px 0;
-      padding: 7px 10px;
-      border-left: 5px solid #33befd;
+    :root{
+      /* AhaMove Birthday Theme Colors */
+      --primary:#FF6B35; --primary-dark:#E55A2B; --primary-light:#FF8C69;
+      --secondary:#FFD23F; --secondary-dark:#E6BD33; --secondary-light:#FFF176;
+      --success:#4CAF50; --danger:#F44336; --info:#2196F3;
+      --background:#FFF8E1; --panel:#FFFFFF; --card:#FFFDE7;
+      --text:#2E2E2E; --text-light:#666666; --border:#FFE0B2;
+      --shadow:rgba(255, 107, 53, 0.2); --glow:rgba(255, 210, 63, 0.6);
+      
+      /* Game specific colors */
+      --game-bg:#FFF3E0; --game-grid:#FF8A50; --game-cell:#FFF8F3;
+      --pickup-bg:#FFE0B2; --pickup-border:#FF9800; 
+      --dropoff-bg:#FFCDD2; --dropoff-border:#F44336;
+      --birthday-bg:#E1BEE7; --birthday-border:#9C27B0;
+    }
+    *{box-sizing:border-box}
+    body { 
+      font-family: 'Segoe UI', 'Inter', Arial, sans-serif; 
+      background: linear-gradient(135deg, var(--background) 0%, #FFECB3 50%, #FFE082 100%);
+      margin: 0; 
+      color: var(--text);
+      overflow-x: hidden;
+      position: relative;
+    }
+    
+    /* Birthday confetti animation */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="%23FF6B35" opacity="0.6"><animateTransform attributeName="transform" type="translate" values="0,0; 10,100; 0,200" dur="3s" repeatCount="indefinite"/></circle><circle cx="40" cy="10" r="1.5" fill="%23FFD23F" opacity="0.5"><animateTransform attributeName="transform" type="translate" values="0,0; -5,100; 0,200" dur="2.5s" repeatCount="indefinite"/></circle><circle cx="60" cy="30" r="1" fill="%23FF8C69" opacity="0.4"><animateTransform attributeName="transform" type="translate" values="0,0; 8,100; 0,200" dur="3.5s" repeatCount="indefinite"/></circle><circle cx="80" cy="15" r="2" fill="%23FFF176" opacity="0.6"><animateTransform attributeName="transform" type="translate" values="0,0; -10,100; 0,200" dur="2.8s" repeatCount="indefinite"/></circle></svg>') repeat;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.3;
+    }
+    h3{margin:8px 0 6px}
+    
+    /* Main Layout - Three Column */
+    .container { 
+      display: grid; 
+      grid-template-columns: 300px 1fr 320px; 
+      gap: 20px; 
+      padding: 20px; 
+      min-height: 100vh;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    /* Left Panel - Game Info Only */
+    .game-info { 
+      background: linear-gradient(135deg, var(--panel) 0%, var(--card) 100%);
+      border-radius: 20px; 
+      box-shadow: 0 8px 32px var(--shadow), 0 0 0 2px var(--border); 
+      padding: 24px;
+      border: 2px solid var(--primary-light);
+      text-align: center; 
+      line-height: 1.6;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* AhaMove branding header */
+    .game-info::before {
+      content: '🎉 AHAMOVE 10 NĂM 🎂';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 8px;
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      border-radius: 20px 20px 0 0;
+      margin: -2px -2px 0 -2px;
+    }
+    
+    .game-info .content {
+      margin-top: 20px;
+    }
+    
+    /* Center - Game Grid */
+    .city-wrap {
+      position: relative; 
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: flex-start;
+      gap: 20px; 
+      padding: 20px 0;
+    }
+    
+    /* Right Panel - Question Management */
+    .right-panel {
+      position: relative;
+    }
+    
+    .question-status {
+      background: var(--panel); 
+      border-radius: 16px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.3);
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    
+    .current-question-set {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 15px;
+      padding: 12px;
+      background: rgba(51, 190, 253, 0.1);
+      border-radius: 10px;
+      border-left: 4px solid var(--accent);
     }
+    
+    .question-set-info {
+      flex: 1;
+    }
+    
+    .question-set-title {
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 5px;
+    }
+    
+    .question-set-details {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .toggle-llm-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .toggle-llm-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .toggle-llm-btn:active {
+      transform: translateY(0);
+    }
+    
+    /* LLM Panel - Initially Hidden */
+    .llm-panel {
+      background: var(--panel); 
+      border-radius: 16px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.3);
+      transition: all 0.3s ease;
+      transform-origin: top;
+      overflow: hidden;
+    }
+    
+    .llm-panel.hidden {
+      max-height: 0;
+      padding: 0 20px;
+      opacity: 0;
+      transform: scaleY(0);
+      margin-bottom: 0;
+    }
+    
+    .llm-panel.visible {
+      max-height: 1000px;
+      opacity: 1;
+      transform: scaleY(1);
+      margin-bottom: 0;
+    }
+    
+    .score, .lives, .question-level { 
+      font-weight: bold; 
+      font-size: 18px; 
+      color: var(--accent);
+    }
+    
+    .question-box { 
+      min-height: 60px; 
+      margin: 12px 0; 
+      border: 2px dashed #66c; 
+      border-radius: 12px; 
+      background: #f7f7fc; 
+      padding: 12px; 
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    
+    .answer-list {
+      margin:0; 
+      padding-left:0; 
+      list-style-type:none; 
+      text-align:left;
+    }
+    
+    .answer-list li {
+      background: linear-gradient(135deg, #e2faff 0%, #f0fdff 100%);
+      border-radius: 10px;
+      margin: 8px 0;
+      padding: 10px 12px;
+      border-left: 4px solid #33befd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+    
+    .answer-list li:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
     .answer-tag {
-      background: #f6e741;
-      font-weight:bold;
+      background: linear-gradient(135deg, #f6e741 0%, #f9ec47 100%);
+      font-weight: bold;
       font-size: 1.1em;
       color: #6b4c00;
-      border-radius:6px;
+      border-radius: 8px;
       padding: 4px 10px;
-      margin-right: 7px;
-      min-width: 28px;
-      text-align:center;
-      box-shadow: 1px 1px 2px #dd4;
+      min-width: 32px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+    
     .answer-coord {
       color: #227a24;
       font-weight: bold;
-      font-size: .98em;
+      font-size: .95em;
       background: #eaffed;
-      border-radius: 4px;
-      padding: 3px 8px;
-      margin-left: 9px;
+      border-radius: 6px;
+      padding: 4px 10px;
+      margin-left: auto;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .cell { border: 1px solid #b3d6ad; background: #eaffed; height: 36px; width: 36px; position: relative; display: flex; justify-content: center; align-items: center; }
-    .grid { display: grid; grid-template-columns: repeat(12, 36px); grid-template-rows: repeat(12, 36px); background: #9fd8aa; border: 5px solid #427837; border-radius: 11px; box-shadow: 0 5px 16px #094d19ab; position: relative;}
-    .driver { font-size: 1.4rem; z-index:2;}
-    .pickup, .pickup.active { font-size: 1.2rem; font-weight: bold; border-radius: 8px; background: #fffbab; border: 2px solid #f5e63f; width: 28px; height: 28px; display: flex;align-items:center;justify-content:center;}
-    .pickup.active { background: #fff288; border:2px solid #ff8500; box-shadow: 0 0 8px #fff50e;}
-    .dropoff, .dropoff.active { font-size: 1.2rem; font-weight: bold; border-radius: 8px; background: #eacfa5; border: 2px solid #8b5702; width: 28px; height: 28px; display: flex;align-items:center;justify-content:center;}
-    .dropoff.active { background: #ffe6c2; border:2px solid #da6b11; box-shadow: 0 0 8px #fff50e;}
-    .birthday { background: #ffe0ee; color: #f13b8f; border-radius: 8px; width: 28px; height: 28px; font-size: 1.2rem; display: flex;align-items:center;justify-content:center; border: 2px solid #e34290;}
-    .inactive { background: #888; color: #fff; border-radius: 12px; width: 28px; height: 28px; font-size: 1rem; opacity: .7;display: flex;align-items:center;justify-content:center;}
-    .answer-building { background: #fffce0 !important; border:2px solid #b3a500 !important;}
-    .answer-code-A:after{content:"A"; display:inline-block; position:absolute; left:1px; bottom:1px; color:#fff;background:#f6e741;font-weight:700;border-radius:50%;width:19px;height:19px;text-align:center;line-height:19px;font-size:.98em;}
-    .answer-code-B:after{content:"B"; display:inline-block; position:absolute; left:1px; bottom:1px; color:#fff;background:#ffba10;font-weight:700;border-radius:50%;width:19px;height:19px;text-align:center;line-height:19px;font-size:.98em;}
-    .answer-code-C:after{content:"C"; display:inline-block; position:absolute; left:1px; bottom:1px; color:#fff;background:#28d857;font-weight:700;border-radius:50%;width:19px;height:19px;text-align:center;line-height:19px;font-size:.98em;}
-    .chosen-wrong { background: #fcb4b4 !important; border:2px solid #b21d1d !important;}
-    .obstacle {background: #bbb url('https://cdn-icons-png.flaticon.com/128/616/616433.png') center/24px 24px no-repeat; border-radius: 6px;}
-    .msg { color: #1b2b3a; font-size: 17px; min-height: 27px;}
-    .game-over, .game-win { background: #fffbe8; border: 2px solid #e01919; border-radius: 8px; padding: 18px; font-size: 2rem; font-weight: bold; color: #e01919; position: absolute; top: 45%; left: 50%; transform: translate(-50%,-50%); z-index: 9; min-width: 280px; text-align: center; box-shadow: 0 8px 24px #4445;}
-    .game-win { color: #145a1b; border-color: #47c661;}
-    .controller { display: flex; flex-direction: column; align-items: center; margin: 6px 0;}
-    .ctrl-btns { display: flex; flex-direction: row; gap:20px;}
-    .ctrl-up, .ctrl-down, .ctrl-left, .ctrl-right { width: 36px; height: 36px; text-align:center; font-size:24px; border-radius: 8px; background: #e4f6ff; cursor:pointer; border:1px solid #7ac5f5; margin:2px; user-select:none;}
-    .ctrl-up:active, .ctrl-down:active, .ctrl-left:active, .ctrl-right:active {background:#b0ebfb;}
+    
+    /* Game Grid */
+    .grid { 
+      display: grid; 
+      grid-template-columns: repeat(12, 40px); 
+      grid-template-rows: repeat(12, 40px); 
+      background: linear-gradient(135deg, var(--game-bg) 0%, #FFCC80 100%); 
+      border: 6px solid var(--game-grid); 
+      border-radius: 20px; 
+      box-shadow: 0 12px 48px var(--shadow), 0 0 0 3px var(--secondary-light); 
+      position: relative;
+      margin: 0 auto;
+    }
+    
+    /* Game title above grid */
+    .grid::before {
+      content: '🚚 SÀI GÒN DELIVERY CHALLENGE 🏢';
+      position: absolute;
+      top: -45px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 4px 16px var(--shadow);
+      white-space: nowrap;
+    }
+    
+    .cell { 
+      border: 1px solid var(--border); 
+      background: var(--game-cell); 
+      height: 40px; 
+      width: 40px; 
+      position: relative; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      transition: all 0.3s ease;
+      border-radius: 4px;
+    }
+    
+    /* Custom driver with image support */
+    .driver { 
+      font-size: 1.6rem; 
+      z-index: 2; 
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+      animation: driverBounce 2s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+    }
+    
+    .driver img {
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+    }
+    
+    @keyframes driverBounce {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-2px); }
+    }
+    
+    /* Custom driver image - Replace with your driver image */
+    .driver.custom-image {
+      width: 36px;
+      height: 36px;
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23FF6B35"/><circle cx="50" cy="40" r="15" fill="%23FFF"/><circle cx="45" cy="38" r="2" fill="%23333"/><circle cx="55" cy="38" r="2" fill="%23333"/><path d="M40 50 Q50 60 60 50" stroke="%23333" stroke-width="2" fill="none"/><text x="50" y="80" text-anchor="middle" font-size="12" fill="%23FFF">🏍️</text></svg>');
+      background-size: cover;
+      background-position: center;
+      border-radius: 50%;
+      border: 3px solid var(--primary);
+      box-shadow: 0 0 15px var(--glow);
+      font-size: 0; /* Hide emoji when using background image */
+    }
+    
+    /* Placeholder for motorcycle image */
+    .vehicle-icon {
+      position: absolute;
+      bottom: -5px;
+      right: -5px;
+      width: 16px;
+      height: 16px;
+      background: var(--secondary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      border: 2px solid white;
+    }
+    
+    /* Instructions for adding custom images */
+    .custom-image-instructions {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--panel);
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      padding: 15px;
+      max-width: 300px;
+      font-size: 12px;
+      box-shadow: 0 4px 20px var(--shadow);
+      z-index: 1000;
+      display: none;
+    }
+    
+    .custom-image-instructions.show {
+      display: block;
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .pickup, .pickup.active { 
+      font-size: 1.3rem; 
+      font-weight: bold; 
+      border-radius: 12px; 
+      background: var(--pickup-bg); 
+      border: 2px solid var(--pickup-border); 
+      width: 32px; 
+      height: 32px; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .pickup img, .dropoff img {
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+    
+    .pickup.active { 
+      background: linear-gradient(135deg, var(--secondary-light) 0%, var(--secondary) 100%); 
+      border: 3px solid var(--primary); 
+      box-shadow: 0 0 20px var(--glow), 0 6px 20px rgba(0,0,0,0.3);
+      animation: ahamovePulse 2s infinite;
+      transform: scale(1.1);
+    }
+    
+    .dropoff, .dropoff.active { 
+      font-size: 1.3rem; 
+      font-weight: bold; 
+      border-radius: 12px; 
+      background: var(--dropoff-bg); 
+      border: 2px solid var(--dropoff-border); 
+      width: 32px; 
+      height: 32px; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .dropoff.active { 
+      background: linear-gradient(135deg, #FFCDD2 0%, #EF5350 100%); 
+      border: 3px solid var(--danger); 
+      box-shadow: 0 0 20px rgba(244, 67, 54, 0.6), 0 6px 20px rgba(0,0,0,0.3);
+      animation: ahamovePulse 2s infinite;
+      transform: scale(1.1);
+    }
+    
+    @keyframes ahamovePulse {
+      0%, 100% { 
+        transform: scale(1.1); 
+        box-shadow: 0 0 20px var(--glow), 0 6px 20px rgba(0,0,0,0.3);
+      }
+      50% { 
+        transform: scale(1.2); 
+        box-shadow: 0 0 30px var(--glow), 0 8px 25px rgba(0,0,0,0.4);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .birthday { 
+      background: linear-gradient(135deg, var(--birthday-bg) 0%, #CE93D8 100%); 
+      color: #4A148C; 
+      border-radius: 15px; 
+      width: 36px; 
+      height: 36px; 
+      font-size: 1.5rem; 
+      display: flex;
+      align-items: center;
+      justify-content: center; 
+      border: 3px solid var(--birthday-border);
+      box-shadow: 0 0 25px #E1BEE7, 0 0 50px rgba(156, 39, 176, 0.3);
+      animation: birthdayCelebration 1.5s infinite alternate;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .birthday img {
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+    }
+    
+    .birthday::before {
+      content: '✨';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      font-size: 12px;
+      animation: sparkle 1s infinite;
+    }
+    
+    .birthday::after {
+      content: '🎊';
+      position: absolute;
+      bottom: -8px;
+      left: -8px;
+      font-size: 12px;
+      animation: sparkle 1s infinite 0.5s;
+    }
+    
+    @keyframes birthdayCelebration {
+      0% { 
+        transform: rotate(-8deg) scale(1); 
+        box-shadow: 0 0 25px #E1BEE7, 0 0 50px rgba(156, 39, 176, 0.3);
+      }
+      100% { 
+        transform: rotate(8deg) scale(1.15); 
+        box-shadow: 0 0 35px #E1BEE7, 0 0 70px rgba(156, 39, 176, 0.5);
+      }
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1) rotate(180deg); }
+    }
+    
+    .inactive { 
+      background: #888; 
+      color: #fff; 
+      border-radius: 12px; 
+      width: 32px; 
+      height: 32px; 
+      font-size: 1.1rem; 
+      opacity: .7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .answer-building { 
+      background: #fffce0 !important; 
+      border: 2px solid #b3a500 !important;
+      box-shadow: 0 0 12px rgba(255,215,0,0.5) !important;
+    }
+    
+    /* Answer codes styling with distinct colors */
+    .answer-code-A span { 
+      background: linear-gradient(135deg, #f6e741 0%, #e6d535 100%) !important; 
+      color: #6b4c00 !important;
+      box-shadow: 0 3px 8px rgba(246, 231, 65, 0.4) !important;
+    }
+    .answer-code-B span { 
+      background: linear-gradient(135deg, #ffba10 0%, #e6a50f 100%) !important; 
+      color: #8b5a00 !important;
+      box-shadow: 0 3px 8px rgba(255, 186, 16, 0.4) !important;
+    }
+    .answer-code-C span { 
+      background: linear-gradient(135deg, #28d857 0%, #24c24f 100%) !important; 
+      color: #0a5d1a !important;
+      box-shadow: 0 3px 8px rgba(40, 216, 87, 0.4) !important;
+    }
+    
+    .chosen-wrong { 
+      background: #fcb4b4 !important; 
+      border: 2px solid #b21d1d !important;
+      animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    .obstacle {
+      background: transparent;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .obstacle img {
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+    
+    .msg { 
+      color: var(--ink); 
+      font-size: 14px; 
+      min-height: 20px;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+    }
+    
+    /* Enhanced Modal Popups */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .game-over-modal, .game-win-modal { 
+      background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      transform: scale(0.9);
+      animation: modalPop 0.4s ease-out forwards;
+      max-width: 400px;
+      width: 90%;
+      border: 3px solid;
+    }
+    
+    .game-over-modal {
+      border-color: #e74c3c;
+      color: #c0392b;
+    }
+    
+    .game-win-modal {
+      border-color: #27ae60;
+      color: #16a085;
+    }
+    
+    @keyframes modalPop {
+      from { 
+        transform: scale(0.7) translateY(-50px);
+        opacity: 0;
+      }
+      to { 
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .modal-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      display: block;
+    }
+    
+    .modal-title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    
+    .modal-message {
+      font-size: 1.2rem;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+    
+    .modal-stats {
+      background: rgba(0,0,0,0.05);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+    
+    .modal-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .modal-btn-primary {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+    }
+    
+    .modal-btn-secondary {
+      background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+      color: white;
+    }
+    
+    .modal-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    
+    .modal-btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Controls */
+    .controller { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      margin: 10px 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 15px;
+    }
+    
+    .ctrl-btns { 
+      display: flex; 
+      flex-direction: row; 
+      gap: 15px;
+    }
+    
+    .ctrl-up, .ctrl-down, .ctrl-left, .ctrl-right, .btn { 
+      padding: 8px 12px; 
+      min-width: 40px; 
+      height: 40px; 
+      text-align: center; 
+      font-size: 16px; 
+      border-radius: 10px; 
+      background: linear-gradient(135deg, #e4f6ff 0%, #cdeeff 100%); 
+      cursor: pointer; 
+      border: 1px solid #7ac5f5; 
+      margin: 2px; 
+      user-select: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.15s ease;
+    }
+    
+    .ctrl-up:hover, .ctrl-down:hover, .ctrl-left:hover, .ctrl-right:hover, .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .ctrl-up:active, .ctrl-down:active, .ctrl-left:active, .ctrl-right:active, .btn:active {
+      background: #b0ebfb;
+      transform: translateY(1px);
+    }
+    
+    .hl {font-weight:700}
+    
+    /* LLM panel specific styles */
+    .llm-panel small{opacity:.8}
+    .llm-grid{display:grid; grid-template-columns: 1fr; gap:12px;}
+    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+    label{font-size:13px; min-width:88px; font-weight: 500;}
+    input[type="password"], input[type="text"], select, textarea {
+      width: 100%; 
+      padding: 10px 12px; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 8px; 
+      background: #fff;
+      transition: all 0.2s ease;
+    }
+    
+    input[type="password"]:focus, input[type="text"]:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(51, 190, 253, 0.1);
+    }
+    
+    textarea{min-height:110px; resize:vertical}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-size:12.5px}
+    .pill{display:inline-block; padding:4px 12px; border-radius:999px; background:#e8f7ff; border:1px solid #bfe7ff; font-size:12px; font-weight: 500;}
+    .status{min-height:18px; font-size:13px; padding: 8px; border-radius: 6px;}
+    .two{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+    .kbd{font-family:ui-monospace,monospace; font-size:12px; background:#eef; border:1px solid #dde; border-bottom-width:2px; padding:2px 6px; border-radius:4px}
+    .flex-between{display:flex; align-items:center; justify-content:space-between}
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 280px 1fr 300px;
+      }
+    }
+    
+    @media (max-width: 960px) {
+      .container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+      
+      .right-panel {
+        order: -1;
+      }
+      
+      .grid {
+        grid-template-columns: repeat(12, 32px);
+        grid-template-rows: repeat(12, 32px);
+      }
+      
+      .cell {
+        height: 32px;
+        width: 32px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- LEFT: Game info + Controls -->
     <div class="game-info">
-      <div><b>Tài Xế: </b>Player 1</div>
-      <div><span class="score">Điểm: 0</span> | <span class="lives">Nhà còn: 10</span></div>
-      <div class="question-level">Độ khó: 1</div>
-      <hr>
+      <div class="content">
+        <div class="flex-between">
+          <div><b>🏍️ Tài xế AhaMove:</b> <span style="color: var(--primary);">Hero Driver</span></div>
+          <button class="btn" id="btnReset" title="Chơi lại" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border: none;">🔄</button>
+        </div>
+        <div style="margin-top:12px; padding: 8px; background: linear-gradient(135deg, var(--card) 0%, #FFF8E1 100%); border-radius: 10px;">
+          <div><span class="score" style="color: var(--primary);">Điểm: 0</span> | <span class="lives" style="color: var(--danger);">Nhà còn: 5</span></div>
+          <div class="question-level" style="color: var(--secondary-dark);">Độ khó: 1</div>
+        </div>
+        <hr style="margin: 15px 0; border: none; height: 2px; background: linear-gradient(to right, transparent, var(--primary), transparent);">
       <div class="question-box"></div>
       <ul class="answer-list"></ul>
       <div class="msg"></div>
-      <hr>
+        <hr style="margin: 15px 0; border: none; height: 2px; background: linear-gradient(to right, transparent, var(--primary), transparent);">
       <div class="controller">
-        <div><b>Di chuyển</b></div>
-        <div>
+          <div><b>🎮 Điều khiển</b> <span class="pill" style="background: var(--secondary-light); color: var(--text);">Phím mũi tên</span></div>
+          <div style="margin-top:10px">
           <button class="ctrl-up" title="Lên">⬆️</button>
         </div>
         <div class="ctrl-btns">
@@ -86,15 +821,141 @@
           <button class="ctrl-down" title="Xuống">⬇️</button>
           <button class="ctrl-right" title="Phải">➡️</button>
         </div>
+          <div style="margin-top: 10px; font-size: 11px; color: var(--text-light); text-align: center;">
+            🎯 Mục tiêu: Giao 5 đơn hàng thành công!<br>
+            🎂 Nhận bánh sinh nhật khi hoàn thành!
+      </div>
+          <div style="margin-top: 10px; text-align: center;">
+            <button class="btn" id="btnCustomImage" title="Hướng dẫn thêm hình ảnh tùy chỉnh" style="font-size: 11px; padding: 4px 8px; background: linear-gradient(135deg, var(--info) 0%, #1976D2 100%); color: white; border: none;">
+              🖼️ Tùy chỉnh hình ảnh
+            </button>
+    </div>
+        </div>
       </div>
     </div>
-    <div style="position:relative;">
-      <div id="gameGrid" class="grid"></div>
+
+    <!-- CENTER: Game Grid -->
+    <div class="city-wrap">
+      <div id="gameGrid" class="grid" aria-label="Bản đồ thành phố 12x12"></div>
       <div id="endScene"></div>
     </div>
+
+    <!-- RIGHT: Question Management -->
+    <div class="right-panel">
+      <!-- Question Status -->
+      <div class="question-status">
+        <h3>🎓 Bộ câu hỏi AhaMove</h3>
+        <div class="current-question-set">
+          <div class="question-set-info">
+            <div class="question-set-title" id="questionSetTitle" style="color: var(--primary);">Hành trình 10 năm AhaMove</div>
+            <div class="question-set-details" id="questionSetDetails" style="color: var(--text-light);">2015-2025 • Câu chuyện thành công • 12 câu hỏi</div>
   </div>
+          <button class="toggle-llm-btn" id="toggleLlmBtn" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);">
+            🤖 Tạo mới
+          </button>
+        </div>
+        <div style="font-size: 13px; color: var(--text-light); text-align: left; background: var(--card); padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary);">
+          <strong style="color: var(--primary);">📊 Thống kê kiến thức:</strong><br>
+          • Tổng câu hỏi: <span id="totalQuestions" style="color: var(--success);">12</span><br>
+          • Độ khó 1-2: <span id="easyQuestions" style="color: var(--info);">4</span> câu (Dễ)<br>
+          • Độ khó 3-5: <span id="hardQuestions" style="color: var(--danger);">8</span> câu (Khó)<br>
+          <small style="color: var(--text-light); font-style: italic;">💡 Câu hỏi về lịch sử, dịch vụ và công nghệ AhaMove</small>
+        </div>
+      </div>
+
+      <!-- LLM Panel - Initially Hidden -->
+      <div class="llm-panel hidden" id="llmPanel">
+        <h3>🧠 Tạo bộ câu hỏi bằng OpenAI</h3>
+        <div class="llm-grid">
+          <div class="row">
+            <label for="apiKey">API Key</label>
+            <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off">
+          </div>
+          <div class="row">
+            <label for="model">Model</label>
+            <select id="model">
+              <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+              <option value="gpt-4o">gpt-4o</option>
+            </select>
+          </div>
+          <div class="two">
+            <div class="row">
+              <label for="qCount">Số câu</label>
+              <input id="qCount" type="text" value="10" inputmode="numeric">
+            </div>
+            <div class="row">
+              <label for="lang">Ngôn ngữ</label>
+              <select id="lang">
+                <option value="vi" selected>Tiếng Việt</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <label for="kb">Knowledge Base</label>
+            <textarea id="kb" class="mono" placeholder="Dán nội dung kiến thức (ví dụ: thông tin các quận huyện, địa danh, toà nhà, tuyến đường, luật giao thông, v.v.)"></textarea>
+          </div>
+          <div class="row">
+            <label for="seed">Seed</label>
+            <input id="seed" type="text" value="42" title="Giúp kết quả ổn định hơn (nếu model hỗ trợ)">
+          </div>
+          <div class="row">
+            <button class="btn" id="btnGen">🚀 Tạo câu hỏi</button>
+            <button class="btn" id="btnPreview">👀 Xem JSON</button>
+            <button class="btn" id="btnImport">📥 Nhập JSON</button>
+          </div>
+          <div class="status" id="llmStatus"></div>
+          <details>
+            <summary class="pill">Hướng dẫn &amp; Schema</summary>
+            <div style="margin-top:12px; font-size:13px">
+              Trả về JSON mảng các phần tử:
+              <pre class="mono" style="white-space:pre-wrap;background:#fff;padding:12px;border:1px solid #dde;border-radius:8px; margin: 8px 0;">
+[
+  {
+    "question": "string",
+    "options": ["optA", "optB", "optC"],
+    "correct": "one of options",
+    "level": 1
+  },
+  ...
+]</pre>
+              <div>Gợi ý độ khó: 1→rất dễ ... 5→khó.</div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Image Instructions -->
+  <div class="custom-image-instructions" id="customImageInstructions">
+    <h4 style="color: var(--primary); margin-top: 0;">🖼️ Hướng dẫn thêm hình ảnh tùy chỉnh</h4>
+    <div style="line-height: 1.4;">
+      <strong>Để thêm hình ảnh tài xế:</strong><br>
+      1. Chuẩn bị file ảnh (PNG/JPG, kích thước 64x64px)<br>
+      2. Upload lên hosting (imgur, cloudinary, etc.)<br>
+      3. Thay thế URL trong CSS class <code>.driver.custom-image</code><br><br>
+      
+      <strong>Để thêm hình ảnh xe máy:</strong><br>
+      1. Thay đổi emoji 🚚 trong drawGrid()<br>
+      2. Hoặc thêm background-image cho .driver<br><br>
+      
+      <strong>Code mẫu:</strong><br>
+      <code style="font-size: 10px; background: #f5f5f5; padding: 2px;">
+        .driver { background-image: url('your-image.png'); }
+      </code>
+    </div>
+    <div style="margin-top: 10px; text-align: right;">
+      <button onclick="toggleCustomImageInstructions()" style="background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Đóng</button>
+    </div>
+  </div>
+
 <script>
-const ROWS = 12, COLS = 12, TOTAL_STOP = 10;
+/* =========================
+   Core Game State & Board
+   ========================= */
+const ROWS = 12, COLS = 12, TOTAL_STOP = 5;
 const BUILDINGS = [
   {x: 1, y: 1, type:"pickup"},
   {x: 6, y: 2, type:"dropoff"},
@@ -112,18 +973,32 @@ const OBSTACLES = [
   {x:0,y:11},{x:1,y:11},{x:2,y:11},{x:8,y:6}, {x:6,y:6}, {x:4,y:9},
   {x:5,y:7}, {x:1, y:8},{x:7,y:11},{x:7,y:10},{x:7,y:9},{x:7,y:8},{x:9,y:0},{x:8,y:0},{x:7,y:0}
 ];
+
+/* ======= AhaMove 10th Anniversary Question Bank ======= */
 let questions = [
-  {question:'Đâu là quận trung tâm TP.HCM?',options:['Quận 1','Nhà Bè','Cần Giờ'],correct:'Quận 1',level:1},
-  {question:'Chợ Bến Thành nằm ở quận nào?',options:['Quận 1', 'Quận 4', 'Quận 7'], correct:'Quận 1',level:1},
-  {question:'Cầu Phú Mỹ nối Quận 2 với quận nào?',options:['Quận 7', 'Bình Thạnh', 'Gò Vấp'],correct:'Quận 7',level:2},
-  {question:'Địa chỉ nào xa nhất khỏi trung tâm?',options:['Củ Chi', 'Bình Thạnh', 'Quận 4'],correct:'Củ Chi',level:2},
-  {question:'“Bitexco” cao bao nhiêu tầng?',options:['68', '49', '72'],correct:'68',level:3},
-  {question:'Bệnh viện Chợ Rẫy nằm ở đâu?',options:['Quận 5', 'Quận 7', 'Quận 10'],correct:'Quận 5',level:3},
-  {question:'Đường xa nhất trong 3 đường?',options:['Nguyễn Hữu Thọ', 'Nguyễn Trãi', 'Lê Lợi'],correct:'Nguyễn Hữu Thọ',level:4},
-  {question:'Khu đô thị sầm uất phía Đông Sài Gòn?',options:['Thủ Thiêm', 'Phú Mỹ Hưng', 'Vĩnh Lộc'],correct:'Thủ Thiêm',level:4},
-  {question:'Tòa nhà Landmark 81 thuộc quận nào?',options:['Bình Thạnh', 'Quận 1', 'Quận 3'],correct:'Bình Thạnh',level:5},
-  {question:'Bến xe miền Tây thuộc quận/huyện nào?',options:['Bình Tân', 'Quận 8', 'Bình Chánh'],correct:'Bình Tân',level:5}
+  // Level 1 - Khởi đầu (2015-2017)
+  {question:'🎂 AhaMove được thành lập vào năm nào, đánh dấu khởi đầu hành trình 10 năm?', options:['2015','2016','2018'], correct:'2015', level:1},
+  {question:'🚚 Slogan đầu tiên của AhaMove gần với ý tưởng nào?', options:['"Uber for trucks"','Food delivery app','Taxi booking service'], correct:'"Uber for trucks"', level:1},
+  
+  // Level 2 - Phát triển (2016-2018)
+  {question:'🏍️ AhaMove mở rộng dịch vụ xe máy tại Hà Nội vào năm nào?', options:['2016','2017','2018'], correct:'2016', level:2},
+  {question:'💰 Dịch vụ "Siêu Rẻ" - tính năng tiết kiệm chi phí ra mắt năm nào?', options:['2017','2019','2021'], correct:'2017', level:2},
+  
+  // Level 3 - Đổi mới (2018-2020)
+  {question:'📱 "Đồng Giá" của AhaMove mang lại lợi ích gì cho khách hàng?', options:['Phí cố định, dễ tính toán','Miễn phí giao hàng','Tích điểm đổi quà'], correct:'Phí cố định, dễ tính toán', level:3},
+  {question:'🦠 COVID-19 (2021) buộc AhaMove phải điều chỉnh như thế nào?', options:['Hạn chế liên quận, điều chỉnh giờ hoạt động','Tạm ngừng hoàn toàn','Chỉ giao đồ ăn'], correct:'Hạn chế liên quận, điều chỉnh giờ hoạt động', level:3},
+  
+  // Level 4 - Bứt phá (2019-2022)
+  {question:'💎 Temasek đầu tư vào Scommerce (AhaMove + GHN) năm nào?', options:['2019','2020','2022'], correct:'2019', level:4},
+  {question:'⚡ AhaMove pilot xe điện với VinFast, sử dụng model nào?', options:['Feliz S','Klara S','Theon S'], correct:'Feliz S', level:4},
+  {question:'☁️ Công nghệ MongoDB Atlas của AhaMove chạy trên platform nào?', options:['AWS','Azure','Google Cloud'], correct:'AWS', level:4},
+  {question:'🗺️ Geospatial query giúp AhaMove tối ưu điều gì?', options:['Ghép đơn và định tuyến thông minh','Dự báo thời tiết','Phân tích cảm xúc khách hàng'], correct:'Ghép đơn và định tuyến thông minh', level:4},
+  
+  // Level 5 - Tương lai (2023-2025)
+  {question:'🎯 Ngày 25/03/2024, AhaMove ra mắt brand promise nào?', options:['"Giao siêu rẻ, nhận siêu tốc"','"Nhanh như chớp"','"Luôn đúng hẹn"'], correct:'"Giao siêu rẻ, nhận siêu tốc"', level:5},
+  {question:'🤖 Aha AI (GenAI) được pilot tại thành phố nào đầu tiên năm 2024?', options:['Đà Nẵng','TP.HCM','Hà Nội'], correct:'Đà Nẵng', level:5}
 ];
+
 const ANSWER_LABELS = ['A', 'B', 'C'];
 
 let gridArr = [];
@@ -132,9 +1007,15 @@ let currAnswerBuildings = [];
 let answerMetaList = [];
 let inactiveBuildings = [];
 let activeBuildingIndex = 0;
-let driverPos = { x: BUILDINGS[0].x, y: BUILDINGS[0].y };
+let driverPos = { x: 0, y: 0 };
 let lockAction = false, gameOver = false, gameWin = false;
 let lastChosenCell = null;
+let isLlmPanelVisible = false;
+let currentQuestionSetInfo = {
+  title: "Hành trình 10 năm AhaMove",
+  description: "2015-2025 • Câu chuyện thành công",
+  isCustom: false
+};
 
 function createGridArr() {
   gridArr = [];
@@ -169,19 +1050,24 @@ function drawGrid() {
       let cell = gridArr[y][x];
       let html = '';
       let classes = "";
-      if(cell.isObstacle) classes += " obstacle";
+      if(cell.isObstacle) {
+        classes += " obstacle";
+        html = `<img src="tree.png" alt="Tree" style="width: 30px; height: 30px; object-fit: contain;">`;
+      }
       else if (cell.isAnswer) {
         classes += " answer-building";
         if(cell.answerCode) classes += " answer-code-" + cell.answerCode;
-        html = `<div><span title="Đáp án">${cell.answerText?cell.answerText:""}</span></div>`;
+        html = `<div><span title="Đáp án: ${cell.answerText}" style="font-size: 28px; font-weight: 900; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); background: rgba(0,0,0,0.3); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">${cell.answerCode || ""}</span></div>`;
         if(lastChosenCell && lastChosenCell.x === x && lastChosenCell.y === y)
             classes += " chosen-wrong";
       }
       else if (cell.isInactive) html = `<div class="inactive" title="Đã vô hiệu hoá">❌</div>`;
-      else if (cell.isBirthday) html = `<div class="birthday" title="Sinh nhật">🎂</div>`;
-      else if (cell.isPickup) html = `<div class="pickup${cell.isActive?' active':''}" title="${cell.isActive?'Điểm mục tiêu':'Pickup'}">🏢</div>`;
-      else if (cell.isDropoff) html = `<div class="dropoff${cell.isActive?' active':''}" title="${cell.isActive?'Điểm mục tiêu':'Drop-off'}">🏬</div>`;
-      if(driverPos.x === x && driverPos.y === y) html = `<div class="driver" title="Tài xế">🚚</div>`;
+      else if (cell.isBirthday) html = `<div class="birthday" title="Sinh nhật"><img src="banh.png" alt="Birthday Cake" style="width: 32px; height: 32px; object-fit: contain;"></div>`;
+      else if (cell.isPickup) html = `<div class="pickup${cell.isActive?' active':''}" title="${cell.isActive?'Điểm mục tiêu':'Pickup'}"><img src="building.png" alt="Building" style="width: 28px; height: 28px; object-fit: contain;"></div>`;
+      else if (cell.isDropoff) html = `<div class="dropoff${cell.isActive?' active':''}" title="${cell.isActive?'Điểm mục tiêu':'Drop-off'}"><img src="building.png" alt="Building" style="width: 28px; height: 28px; object-fit: contain;"></div>`;
+      if(driverPos.x === x && driverPos.y === y) {
+        html = `<div class="driver" title="Tài xế AhaMove"><img src="xe.png" alt="Vehicle" style="width: 32px; height: 32px; object-fit: contain;"></div>`;
+      }
       gridDiv.innerHTML += `<div class="cell${classes}">${html}</div>`;
     }
   }
@@ -192,16 +1078,62 @@ function updateInfo() {
   document.querySelector('.lives').innerText = `Nhà còn: ${TOTAL_STOP - inactiveBuildings.length}`;
   document.querySelector('.question-level').innerText = `Độ khó: ${difficulty}`;
 }
+
+function updateQuestionSetInfo() {
+  document.getElementById('questionSetTitle').textContent = currentQuestionSetInfo.title;
+  document.getElementById('questionSetDetails').textContent = 
+    `${currentQuestionSetInfo.description} • ${questions.length} câu hỏi`;
+  
+  // Update statistics
+  const total = questions.length;
+  const easy = questions.filter(q => q.level <= 2).length;
+  const hard = questions.filter(q => q.level >= 3).length;
+  
+  document.getElementById('totalQuestions').textContent = total;
+  document.getElementById('easyQuestions').textContent = easy;
+  document.getElementById('hardQuestions').textContent = hard;
+  
+  // Update toggle button
+  const toggleBtn = document.getElementById('toggleLlmBtn');
+  if (isLlmPanelVisible) {
+    toggleBtn.innerHTML = '❌ Đóng';
+    toggleBtn.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+  } else {
+    toggleBtn.innerHTML = currentQuestionSetInfo.isCustom ? '🔧 Chỉnh sửa' : '🤖 Tạo mới';
+    toggleBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+  }
+}
+
+function toggleLlmPanel() {
+  const llmPanel = document.getElementById('llmPanel');
+  isLlmPanelVisible = !isLlmPanelVisible;
+  
+  if (isLlmPanelVisible) {
+    llmPanel.classList.remove('hidden');
+    llmPanel.classList.add('visible');
+  } else {
+    llmPanel.classList.remove('visible');
+    llmPanel.classList.add('hidden');
+  }
+  
+  updateQuestionSetInfo();
+}
+
 function hideQuestion() {
   document.querySelector('.question-box').innerText = '';
   document.querySelector('.answer-list').innerHTML = '';
   document.querySelector('.msg').innerText = '';
 }
+
 function showMsg(t,msg) {
-  document.querySelector('.msg').innerText = msg;
-  if(t>0) setTimeout(()=>document.querySelector('.msg').innerText='',t);
+  const m = document.querySelector('.msg');
+  m.innerText = msg;
+  if(t>0) setTimeout(()=>{ if(m.innerText===msg) m.innerText=''; },t);
 }
 
+/* =========================
+   Movement & Interaction
+   ========================= */
 function move(dx,dy) {
   if(gameOver || gameWin || lockAction) return;
   let nx = driverPos.x + dx, ny = driverPos.y + dy;
@@ -212,17 +1144,37 @@ function move(dx,dy) {
   drawGrid();
   checkCell();
 }
-document.querySelector('.ctrl-up').onclick = ()=>move(0,-1);
-document.querySelector('.ctrl-down').onclick = ()=>move(0,1);
-document.querySelector('.ctrl-left').onclick = ()=>move(-1,0);
-document.querySelector('.ctrl-right').onclick = ()=>move(1,0);
-document.addEventListener('keydown',e=>{
+
+// Prevent arrow key scrolling
+document.addEventListener('keydown', function(e) {
   if(gameOver || gameWin || lockAction) return;
+  
+  // Prevent default scrolling behavior for arrow keys
+  if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    e.preventDefault();
+  }
+  
   if(e.key==='ArrowUp') move(0,-1);
   else if(e.key==='ArrowDown') move(0,1);
   else if(e.key==='ArrowLeft') move(-1,0);
   else if(e.key==='ArrowRight') move(1,0);
 });
+
+document.querySelector('.ctrl-up').onclick = ()=>move(0,-1);
+document.querySelector('.ctrl-down').onclick = ()=>move(0,1);
+document.querySelector('.ctrl-left').onclick = ()=>move(-1,0);
+document.querySelector('.ctrl-right').onclick = ()=>move(1,0);
+
+// Toggle LLM Panel
+document.getElementById('toggleLlmBtn').onclick = toggleLlmPanel;
+
+// Custom Image Instructions
+document.getElementById('btnCustomImage').onclick = toggleCustomImageInstructions;
+
+function toggleCustomImageInstructions() {
+  const instructions = document.getElementById('customImageInstructions');
+  instructions.classList.toggle('show');
+}
 
 function getActiveBuilding() { return BUILDINGS[activeBuildingIndex]; }
 function getActiveCell() { let pt = getActiveBuilding(); return gridArr[pt.y][pt.x]; }
@@ -243,7 +1195,6 @@ function checkCell() {
     showQuestionBox();
     return;
   }
-  // Giữ nguyên câu hỏi hiện tại cho đến khi round mới bắt đầu (sau khi check xong đáp án)
 }
 
 function shuffle(arr) {
@@ -252,6 +1203,7 @@ function shuffle(arr) {
     [arr[i],arr[j]] = [arr[j],arr[i]];
   } return arr;
 }
+
 function randomOtherBuildings_exc(excl=[]) {
   let excludeSet = excl.map(pt=>pt.x+','+pt.y);
   let eligible = [];
@@ -265,8 +1217,37 @@ function randomOtherBuildings_exc(excl=[]) {
   return shuffle(eligible);
 }
 
+function manhattan(a,b){ return Math.abs(a.x - b.x) + Math.abs(a.y - b.y); }
+
+function findFarthestActiveBuilding(fromIdx){
+  const from = BUILDINGS[fromIdx];
+  let bestIdx = -1, bestDist = -1;
+  for(let i=0;i<BUILDINGS.length;i++){
+    if(i===fromIdx) continue;
+    const b = BUILDINGS[i];
+    const cell = gridArr[b.y][b.x];
+    if(cell.isInactive || cell.isDone) continue;
+    const d = manhattan(from, b);
+    if(d > bestDist){
+      bestDist = d;
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
+}
+
+function reassignOrderFarthest(){
+  const currentIdx = activeBuildingIndex;
+  const farIdx = findFarthestActiveBuilding(currentIdx);
+  if(farIdx !== -1){
+    setActiveBuilding(farIdx);
+    showMsg(2400, "↪️ Đơn mới đã được gán ở vị trí xa nhất so với đơn trước!");
+  }
+}
+
 function createAnswerBuildings(triggerCell) {
-  currQuestion = questions.filter(q=>q.level>=difficulty&&!q.used)[0]||questions[Math.floor(Math.random()*questions.length)];
+  let pool = questions.filter(q=>q.level>=difficulty&&!q.used);
+  currQuestion = (pool.length? pool[0] : questions[Math.floor(Math.random()*questions.length)]);
   if(currQuestion && currQuestion.used !== undefined) currQuestion.used=true;
 
   let opts = shuffle(currQuestion.options.slice());
@@ -309,15 +1290,14 @@ function removeAnswerBuildings() {
 
 function showQuestionBox() {
   let qbox = document.querySelector('.question-box');
-  qbox.innerText = currQuestion.question + "\n(Hãy di chuyển đến 1 toà nhà đáp án được chỉ định!)";
+  qbox.innerText = (currQuestion?.question || '(Chưa có câu hỏi)') + "\n(Hãy di chuyển đến 1 toà nhà đáp án A/B/C!)";
   let ul = document.querySelector('.answer-list');
   ul.innerHTML = '';
   answerMetaList.forEach(meta=>{
-    let desc = `${meta.code}`;
     let type = (gridArr[meta.y][meta.x].isPickup||gridArr[meta.y][meta.x].isDropoff) ? "🏠" : "🏡";
     let li = document.createElement('li');
     li.innerHTML = `
-      <span class="answer-tag">${desc}</span>
+      <span class="answer-tag">${meta.code}</span>
       <span>${meta.answer}</span>
       <span class="answer-coord">${type} (${meta.x},${meta.y})</span>
     `;
@@ -348,25 +1328,23 @@ function answerBuildingAction(cell) {
       nextActiveBuilding();
     }
   } else {
-    if(cell.isPickup||cell.isDropoff)
-    {
+    if(cell.isPickup||cell.isDropoff) {
       cell.isInactive=true;
       inactiveBuildings.push({x: cell.x, y: cell.y});
     }
     difficulty = Math.max(1,difficulty-1);
-    showMsg(1800,"❌ Sai! Điểm này bị vô hiệu hóa!");
+    showMsg(1800,"❌ Sai! Điểm này bị vô hiệu hóa! Đơn sẽ được gán ở nơi xa nhất.");
+    reassignOrderFarthest();
     if(inactiveBuildings.length >= TOTAL_STOP-3) {
       setTimeout(()=>showEnd('game-over'),400);
     }
   }
   updateInfo();
-  // KHÔNG xóa bảng câu hỏi —
   setTimeout(()=>{
     lastChosenCell=null; lockAction = false; drawGrid();
-    // Show lại đúng prompt ở dưới (nếu round mới mới sẽ thay thế)
     if (!gameOver && !gameWin) {
       if(currAnswerBuildings.length===0)
-        document.querySelector('.msg').innerText = "(Hãy điều khiển tài xế đến đúng vị trí A/B/C!)";
+        document.querySelector('.msg').innerText = "🎯 Hãy di chuyển đến điểm pickup/dropoff được đánh dấu để nhận câu hỏi tiếp theo!";
     }
   }, 1100);
 }
@@ -382,6 +1360,7 @@ function nextActiveBuilding() {
     }
   }
 }
+
 function setActiveBuilding(idx) {
   for (const b of BUILDINGS) gridArr[b.y][b.x].isActive = false;
   let b = BUILDINGS[idx];
@@ -389,21 +1368,95 @@ function setActiveBuilding(idx) {
   gridArr[b.y][b.x].isActive = true;
 }
 
+// Enhanced Modal System
 function showEnd(type) {
-  let el = document.getElementById('endScene');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  
+  const modal = document.createElement('div');
+  modal.className = type === 'game-over' ? 'game-over-modal' : 'game-win-modal';
+  
+  let icon, title, message, stats;
+  
   if (type === 'game-over') {
-    el.innerHTML = `<div class="game-over">Thua cuộc! <br/>Bạn đã hết toà nhà giao nhận!</div>`;
+    icon = '💥';
+    title = 'Game Over!';
+    message = 'Bạn đã hết toà nhà giao nhận!';
+    stats = `
+      <div class="modal-stats">
+        📊 <strong>Thống kê cuối game:</strong><br>
+        🏆 Điểm số: ${score}/${TOTAL_STOP}<br>
+        📈 Độ khó đạt được: ${difficulty}/5<br>
+        🏢 Toà nhà còn lại: ${TOTAL_STOP - inactiveBuildings.length}
+      </div>
+    `;
     gameOver = true;
   } else {
-    el.innerHTML = `<div class="game-win">🎉 Thắng game!<br/>Bạn đã hoàn thành giao hàng và nhận bánh sinh nhật!</div>`;
+    icon = '🎉';
+    title = 'Chúc mừng!';
+    message = 'Bạn đã hoàn thành tất cả giao hàng và nhận được bánh sinh nhật!';
+    stats = `
+      <div class="modal-stats">
+        🏆 <strong>Kết quả xuất sắc:</strong><br>
+        ⭐ Điểm số: ${score}/${TOTAL_STOP}<br>
+        🚀 Độ khó cuối: ${difficulty}/5<br>
+        🎯 Tỷ lệ thành công: 100%
+      </div>
+    `;
     gameWin = true;
   }
+  
+  modal.innerHTML = `
+    <div class="modal-icon">${icon}</div>
+    <div class="modal-title">${title}</div>
+    <div class="modal-message">${message}</div>
+    ${stats}
+    <div class="modal-buttons">
+      <button class="modal-btn modal-btn-primary" onclick="restartGame()">🔄 Chơi lại</button>
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal()">❌ Đóng</button>
+    </div>
+  `;
+  
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  document.getElementById('endScene').innerHTML = '';
+  
+  // Add click outside to close
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
 }
+
+function closeModal() {
+  const overlay = document.querySelector('.modal-overlay');
+  if (overlay) {
+    overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+    setTimeout(() => {
+      overlay.remove();
+    }, 300);
+  }
+}
+
+function restartGame() {
+  closeModal();
+  setTimeout(gameInit, 100);
+}
+
+// Add fadeOut animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
 function gameInit() {
   createGridArr();
   score = 0; inactiveBuildings = [];
   activeBuildingIndex = 0;
-  driverPos = {x: BUILDINGS[0].x, y: BUILDINGS[0].y};
+  driverPos = {x: 0, y: 0};
   difficulty=1;lockAction = false;gameWin=gameOver=false;
   lastChosenCell = null;
   questions.forEach(q=>q.used=false);
@@ -413,10 +1466,443 @@ function gameInit() {
   setActiveBuilding(activeBuildingIndex);
   hideQuestion();
   updateInfo();
+  updateQuestionSetInfo();
   drawGrid();
   document.getElementById('endScene').innerHTML='';
+  showMsg(3000, "🚚 Chào mừng! Hãy di chuyển đến điểm pickup/dropoff được đánh dấu để bắt đầu!");
 }
+
+document.getElementById('btnReset').onclick = gameInit;
+
+/* =========================
+   LLM Question Generator
+   ========================= */
+const elApiKey = document.getElementById('apiKey');
+const elModel  = document.getElementById('model');
+const elKb     = document.getElementById('kb');
+const elCount  = document.getElementById('qCount');
+const elLang   = document.getElementById('lang');
+const elSeed   = document.getElementById('seed');
+const elStatus = document.getElementById('llmStatus');
+
+document.getElementById('btnGen').addEventListener('click', handleGenerate);
+document.getElementById('btnPreview').addEventListener('click', previewJSON);
+document.getElementById('btnImport').addEventListener('click', importJSONDialog);
+
+function previewJSON(){
+  const out = JSON.stringify(questions.map(({question,options,correct,level})=>({question,options,correct,level})), null, 2);
+  const w = window.open('', '_blank');
+  w.document.write(`<pre style="font-family: monospace; padding: 20px; line-height: 1.4;">${escapeHtml(out)}</pre>`);
+  w.document.close();
+}
+
+function importJSONDialog(){
+  const raw = prompt("Dán JSON câu hỏi theo schema đã mô tả:");
+  if(!raw) return;
+  try{
+    const data = extractJson(raw);
+    const ok = validateQuestionSet(data);
+    if(!ok.valid) throw new Error(ok.reason||'Bộ câu hỏi không hợp lệ.');
+    applyQuestionSet(data, {
+      title: "Bộ câu hỏi tùy chỉnh",
+      description: "Nhập từ JSON",
+      isCustom: true
+    });
+    elStatus.innerText = `✅ Đã nhập ${data.length} câu hỏi. Bộ câu hỏi mới đã áp dụng.`;
+    elStatus.style.background = '#d4edda';
+    elStatus.style.color = '#155724';
+  }catch(err){
+    elStatus.innerText = `❌ Lỗi nhập JSON: ${err.message}`;
+    elStatus.style.background = '#f8d7da';
+    elStatus.style.color = '#721c24';
+  }
+}
+
+async function handleGenerate(){
+  const apiKey = elApiKey.value.trim();
+  if(!apiKey){ 
+    elStatus.innerText = "⚠️ Nhập API Key trước."; 
+    elStatus.style.background = '#fff3cd';
+    elStatus.style.color = '#856404';
+    return; 
+  }
+  const model  = elModel.value;
+  const kb     = elKb.value.trim();
+  const count  = Math.max(3, Math.min(30, parseInt(elCount.value||'10',10) || 10));
+  const lang   = elLang.value || 'vi';
+  const seed   = parseInt(elSeed.value||'42',10) || 42;
+
+  elStatus.innerText = "⏳ Đang tạo câu hỏi từ LLM...";
+  elStatus.style.background = '#cce5ff';
+  elStatus.style.color = '#004085';
+  
+  try{
+    const payload = buildChatPayload({model, kb, count, lang, seed});
+    const resp = await fetch("https://api.openai.com/v1/chat/completions",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":`Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+    if(!resp.ok){
+      const errText = await resp.text().catch(()=>resp.statusText);
+      throw new Error(`OpenAI HTTP ${resp.status}: ${errText}`);
+    }
+    const data = await resp.json();
+    const content = data?.choices?.[0]?.message?.content || '';
+    const json = extractJson(content);
+    const ok = validateQuestionSet(json);
+    if(!ok.valid) throw new Error(ok.reason||'Bộ câu hỏi không hợp lệ.');
+
+    const topic = kb ? (kb.substring(0, 30) + (kb.length > 30 ? '...' : '')) : 'Tùy chỉnh';
+    applyQuestionSet(json, {
+      title: "Bộ câu hỏi AI",
+      description: `${topic} • ${model}`,
+      isCustom: true
+    });
+    elStatus.innerText = `✅ Đã tạo ${json.length} câu hỏi. Bộ câu hỏi mới đã áp dụng.`;
+    elStatus.style.background = '#d4edda';
+    elStatus.style.color = '#155724';
+  }catch(err){
+    console.error(err);
+    elStatus.innerText = `❌ Khôngtạo được câu hỏi: ${err.message}`;
+    elStatus.style.background = '#f8d7da';
+    elStatus.style.color = '#721c24';
+  }
+}
+
+function buildChatPayload({model, kb, count, lang, seed}){
+  const locale = (lang === 'vi') ? "Tiếng Việt" : "English";
+  const sys = `
+Bạn là trợ lý tạo câu hỏi cho game giao hàng trong thành phố 12×12.
+Hãy xuất duy nhất một JSON array, KHÔNG giải thích thêm, theo schema:
+[
+  {"question": string, "options": [string,string,string], "correct": string, "level": 1..5},
+  ...
+]
+Yêu cầu:
+- ${count} câu hỏi, ngôn ngữ: ${locale}.
+- Chủ đề phù hợp kiến thức cung cấp (pickup/drop-off, địa danh, toạ độ, quy tắc đường phố, tuyến đường, v.v.).
+- "options" luôn có 3 phần tử rõ ràng, không trùng lặp.
+- "correct" là 1 trong 3 "options".
+- "level" tăng dần (xấp xỉ phân bố từ dễ→khó).
+- Không dùng ký tự đặc biệt lạ, không markdown, KHÔNG bọc \`\`\`.
+  `.trim();
+
+  const user = `
+[KNOWLEDGE BASE]
+${kb || '(trống)'}
+[GOAL]
+Tạo ${count} câu hỏi theo đúng schema ở trên.
+  `.trim();
+
+  const messages = [
+    {role:"system", content: sys},
+    {role:"user", content: user}
+  ];
+
+  const payload = {
+    model,
+    messages,
+    temperature: 0.4,
+    top_p: 0.9,
+    n: 1
+  };
+  payload.seed = seed;
+  return payload;
+}
+
+function extractJson(text){
+  try{ return JSON.parse(text); }catch(_){}
+  const fence = text.match(/```json([\s\S]*?)```/i);
+  if(fence){
+    const inner = fence[1].trim();
+    return JSON.parse(inner);
+  }
+  const start = text.indexOf('['), end = text.lastIndexOf(']');
+  if(start !== -1 && end !== -1 && end > start){
+    const slice = text.slice(start, end+1);
+    return JSON.parse(slice);
+  }
+  throw new Error("Không tìm thấy JSON hợp lệ trong phản hồi.");
+}
+
+function validateQuestionSet(arr){
+  if(!Array.isArray(arr) || arr.length===0)
+    return {valid:false, reason:"Phản hồi không phải mảng JSON hoặc rỗng."};
+  for(let i=0;i<arr.length;i++){
+    const it = arr[i];
+    if(!it || typeof it!=='object') return {valid:false, reason:`Phần tử ${i} không hợp lệ.`};
+    const {question, options, correct, level} = it;
+    if(typeof question!=='string' || !question.trim()) return {valid:false, reason:`Câu ${i+1}: 'question' thiếu hoặc rỗng.`};
+    if(!Array.isArray(options) || options.length!==3) return {valid:false, reason:`Câu ${i+1}: 'options' phải có đúng 3 phần tử.`};
+    if(options.some(o=>typeof o!=='string' || !o.trim())) return {valid:false, reason:`Câu ${i+1}: Có đáp án rỗng.`};
+    if(typeof correct!=='string' || !options.includes(correct)) return {valid:false, reason:`Câu ${i+1}: 'correct' không nằm trong 'options'.`};
+    if(typeof level!=='number' || level<1 || level>5) return {valid:false, reason:`Câu ${i+1}: 'level' phải trong [1..5].`};
+  }
+  return {valid:true};
+}
+
+function applyQuestionSet(newSet, info = null){
+  questions = newSet.map(q=>({
+    question: String(q.question),
+    options: [String(q.options[0]), String(q.options[1]), String(q.options[2])],
+    correct: String(q.correct),
+    level: Math.max(1, Math.min(5, parseInt(q.level,10)||1)),
+    used: false
+  }));
+  questions.forEach(q=>q.used=false);
+  
+  // Update question set info
+  if (info) {
+    currentQuestionSetInfo = info;
+  }
+  
+  // Update UI
+  updateQuestionSetInfo();
+  
+  showMsg(2500, "📚 Bộ câu hỏi mới đã sẵn sàng. Tiếp tục chơi để thấy câu hỏi mới.");
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+
+// Initialize game on load
+document.addEventListener('DOMContentLoaded', function() {
+  // Set initial question set info
+  updateQuestionSetInfo();
+  
+  // Initialize game
 gameInit();
+  
+  // Add some helpful tooltips
+  const tooltips = {
+    'btnReset': 'Khởi động lại game với bộ câu hỏi hiện tại',
+    'toggleLlmBtn': 'Mở/đóng panel tạo câu hỏi mới bằng AI',
+    'btnGen': 'Sử dụng OpenAI để tạo bộ câu hỏi mới dựa trên kiến thức đã nhập',
+    'btnPreview': 'Xem toàn bộ câu hỏi hiện tại dưới dạng JSON',
+    'btnImport': 'Nhập bộ câu hỏi từ JSON có sẵn'
+  };
+  
+  Object.entries(tooltips).forEach(([id, tooltip]) => {
+    const element = document.getElementById(id);
+    if (element && !element.hasAttribute('title')) {
+      element.setAttribute('title', tooltip);
+    }
+  });
+  
+  // Add keyboard shortcuts info
+  document.addEventListener('keydown', function(e) {
+    // Toggle LLM panel with Ctrl+Q
+    if (e.ctrlKey && e.key === 'q') {
+      e.preventDefault();
+      toggleLlmPanel();
+    }
+    
+    // Reset game with Ctrl+R (prevent default browser refresh)
+    if (e.ctrlKey && e.key === 'r') {
+      e.preventDefault();
+      gameInit();
+    }
+  });
+});
+
+// Add some game statistics tracking
+let gameStats = {
+  gamesPlayed: 0,
+  totalScore: 0,
+  bestScore: 0,
+  questionsAnswered: 0,
+  correctAnswers: 0,
+  customQuestionSetsUsed: 0
+};
+
+// Load stats from localStorage
+try {
+  const saved = localStorage.getItem('deliveryGameStats');
+  if (saved) {
+    gameStats = {...gameStats, ...JSON.parse(saved)};
+  }
+} catch (e) {
+  console.warn('Could not load game stats from localStorage');
+}
+
+// Save stats to localStorage
+function saveGameStats() {
+  try {
+    localStorage.setItem('deliveryGameStats', JSON.stringify(gameStats));
+  } catch (e) {
+    console.warn('Could not save game stats to localStorage');
+  }
+}
+
+// Update game statistics
+function updateGameStats(gameEnded = false, wasCorrectAnswer = null) {
+  if (gameEnded) {
+    gameStats.gamesPlayed++;
+    gameStats.totalScore += score;
+    if (score > gameStats.bestScore) {
+      gameStats.bestScore = score;
+    }
+    if (currentQuestionSetInfo.isCustom) {
+      gameStats.customQuestionSetsUsed++;
+    }
+  }
+  
+  if (wasCorrectAnswer !== null) {
+    gameStats.questionsAnswered++;
+    if (wasCorrectAnswer) {
+      gameStats.correctAnswers++;
+    }
+  }
+  
+  saveGameStats();
+}
+
+// Enhanced modal with stats
+function showEnd(type) {
+  updateGameStats(true);
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  
+  const modal = document.createElement('div');
+  modal.className = type === 'game-over' ? 'game-over-modal' : 'game-win-modal';
+  
+  let icon, title, message, stats;
+  
+  const accuracy = gameStats.questionsAnswered > 0 ? 
+    Math.round((gameStats.correctAnswers / gameStats.questionsAnswered) * 100) : 0;
+  const avgScore = gameStats.gamesPlayed > 0 ? 
+    Math.round((gameStats.totalScore / gameStats.gamesPlayed) * 10) / 10 : 0;
+  
+  if (type === 'game-over') {
+    icon = '💥';
+    title = 'Game Over!';
+    message = 'Bạn đã hết toà nhà giao nhận!';
+    stats = `
+      <div class="modal-stats">
+        📊 <strong>Thống kê game này:</strong><br>
+        🏆 Điểm số: ${score}/${TOTAL_STOP}<br>
+        📈 Độ khó đạt được: ${difficulty}/5<br>
+        🏢 Toà nhà còn lại: ${TOTAL_STOP - inactiveBuildings.length}<br><br>
+        📈 <strong>Thống kê tổng thể:</strong><br>
+        🎮 Số game đã chơi: ${gameStats.gamesPlayed}<br>
+        🏅 Điểm cao nhất: ${gameStats.bestScore}<br>
+        📊 Điểm trung bình: ${avgScore}<br>
+        🎯 Độ chính xác: ${accuracy}%
+      </div>
+    `;
+    gameOver = true;
+  } else {
+    icon = '🎉';
+    title = 'Chúc mừng!';
+    message = 'Bạn đã hoàn thành tất cả giao hàng và nhận được bánh sinh nhật!';
+    stats = `
+      <div class="modal-stats">
+        🏆 <strong>Kết quả xuất sắc:</strong><br>
+        ⭐ Điểm số: ${score}/${TOTAL_STOP}<br>
+        🚀 Độ khó cuối: ${difficulty}/5<br>
+        🎯 Tỷ lệ thành công: 100%<br><br>
+        📈 <strong>Thống kê tổng thể:</strong><br>
+        🎮 Số game đã chơi: ${gameStats.gamesPlayed}<br>
+        🏅 Điểm cao nhất: ${gameStats.bestScore}<br>
+        📊 Điểm trung bình: ${avgScore}<br>
+        🎯 Độ chính xác: ${accuracy}%
+      </div>
+    `;
+    gameWin = true;
+  }
+  
+  modal.innerHTML = `
+    <div class="modal-icon">${icon}</div>
+    <div class="modal-title">${title}</div>
+    <div class="modal-message">${message}</div>
+    ${stats}
+    <div class="modal-buttons">
+      <button class="modal-btn modal-btn-primary" onclick="restartGame()">🔄 Chơi lại</button>
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal()">❌ Đóng</button>
+    </div>
+  `;
+  
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  document.getElementById('endScene').innerHTML = '';
+  
+  // Add click outside to close
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+}
+
+// Update answerBuildingAction to track stats
+function answerBuildingAction(cell) {
+  if(lockAction) return;
+  lockAction = true;
+  let answer = cell.answerText;
+  let isRight = (answer === currQuestion.correct);
+  removeAnswerBuildings();
+  lastChosenCell = {x:cell.x, y:cell.y};
+  
+  // Update statistics
+  updateGameStats(false, isRight);
+  
+  if(isRight) {
+    score++;
+    let acell = getActiveCell();
+    acell.isDone = true;
+    acell.isActive = false;
+    difficulty = Math.min(5, difficulty+1);
+    document.querySelector('.msg').innerText = "✔️ Đúng! Tiếp tục giao đơn mới.";
+    if((score)>=TOTAL_STOP) {
+      let bday = {x: COLS-2, y:1};
+      gridArr[bday.y][bday.x].isBirthday = true;
+      lockAction = false;
+    } else {
+      nextActiveBuilding();
+    }
+  } else {
+    if(cell.isPickup||cell.isDropoff) {
+      cell.isInactive=true;
+      inactiveBuildings.push({x: cell.x, y: cell.y});
+    }
+    difficulty = Math.max(1,difficulty-1);
+    showMsg(1800,"❌ Sai! Điểm này bị vô hiệu hóa! Đơn sẽ được gán ở nơi xa nhất.");
+    reassignOrderFarthest();
+    if(inactiveBuildings.length >= TOTAL_STOP-3) {
+      setTimeout(()=>showEnd('game-over'),400);
+    }
+  }
+  updateInfo();
+  setTimeout(()=>{
+    lastChosenCell=null; lockAction = false; drawGrid();
+    if (!gameOver && !gameWin) {
+      if(currAnswerBuildings.length===0)
+        document.querySelector('.msg').innerText = "🎯 Hãy di chuyển đến điểm pickup/dropoff được đánh dấu để nhận câu hỏi tiếp theo!";
+    }
+  }, 1100);
+}
+
+// Add console info for developers
+console.log(`
+🚚 Game Tài Xế Giao Hàng đã được tải!
+
+⌨️ Phím tắt:
+• Mũi tên: Di chuyển
+• Ctrl+Q: Mở/đóng panel AI
+• Ctrl+R: Khởi động lại game
+
+🎮 Hướng dẫn chơi:
+1. Di chuyển đến điểm pickup/dropoff có đánh dấu
+2. Trả lời câu hỏi bằng cách di chuyển đến đáp án A/B/C
+3. Hoàn thành ${TOTAL_STOP} đơn hàng để thắng game
+
+📊 Thống kê được lưu trong localStorage
+🤖 Có thể tạo câu hỏi mới bằng OpenAI API
+`);
 </script>
 </body>
 </html>
