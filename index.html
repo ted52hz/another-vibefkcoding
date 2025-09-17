@@ -803,7 +803,7 @@
           <button class="btn" id="btnReset" title="Chơi lại" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border: none;">🔄</button>
         </div>
         <div style="margin-top:12px; padding: 8px; background: linear-gradient(135deg, var(--card) 0%, #FFF8E1 100%); border-radius: 10px;">
-          <div><span class="score" style="color: var(--primary);">Điểm: 0</span> | <span class="lives" style="color: var(--danger);">Nhà còn: 5</span></div>
+          <div><span class="score" style="color: var(--primary);">Số đơn đã hoàn thành: 0</span><br><span class="lives" style="color: var(--danger);">Số đơn cần hoàn thành: 5</span></div>
           <div class="question-level" style="color: var(--secondary-dark);">Độ khó: 1</div>
         </div>
         <hr style="margin: 15px 0; border: none; height: 2px; background: linear-gradient(to right, transparent, var(--primary), transparent);">
@@ -855,10 +855,10 @@
           </button>
         </div>
         <div style="font-size: 13px; color: var(--text-light); text-align: left; background: var(--card); padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary);">
-          <strong style="color: var(--primary);">📊 Thống kê kiến thức:</strong><br>
-          • Tổng câu hỏi: <span id="totalQuestions" style="color: var(--success);">12</span><br>
-          • Độ khó 1-2: <span id="easyQuestions" style="color: var(--info);">4</span> câu (Dễ)<br>
-          • Độ khó 3-5: <span id="hardQuestions" style="color: var(--danger);">8</span> câu (Khó)<br>
+          <strong style="color: var(--primary);">📊 Hướng dẫn sử dụng:</strong><br>
+          • Bước 1: <span id="totalQuestions1" style="color: var(--text);"></span><br>
+          • Bước 2: <span id="totalQuestions2" style="color: var(--text);"></span><br>
+          • Bước 3: <span id="totalQuestions3" style="color: var(--text);"></span><br>
           <small style="color: var(--text-light); font-style: italic;">💡 Câu hỏi về lịch sử, dịch vụ và công nghệ AhaMove</small>
         </div>
       </div>
@@ -985,7 +985,7 @@ let questions = [
   {question:'💰 Dịch vụ "Siêu Rẻ" - tính năng tiết kiệm chi phí ra mắt năm nào?', options:['2017','2019','2021'], correct:'2017', level:2},
   
   // Level 3 - Đổi mới (2018-2020)
-  {question:'📱 "Đồng Giá" của AhaMove mang lại lợi ích gì cho khách hàng?', options:['Phí cố định, dễ tính toán','Miễn phí giao hàng','Tích điểm đổi quà'], correct:'Phí cố định, dễ tính toán', level:3},
+  {question:'📱 "Đồng Giá" của AhaMove mang lại lợi ích gì cho khách hàng?', options:['Phí cố định, dễ tính toán','Miễn phí giao hàng','Tích Số đơn đã hoàn thành đổi quà'], correct:'Phí cố định, dễ tính toán', level:3},
   {question:'🦠 COVID-19 (2021) buộc AhaMove phải điều chỉnh như thế nào?', options:['Hạn chế liên quận, điều chỉnh giờ hoạt động','Tạm ngừng hoàn toàn','Chỉ giao đồ ăn'], correct:'Hạn chế liên quận, điều chỉnh giờ hoạt động', level:3},
   
   // Level 4 - Bứt phá (2019-2022)
@@ -1063,8 +1063,8 @@ function drawGrid() {
       }
       else if (cell.isInactive) html = `<div class="inactive" title="Đã vô hiệu hoá">❌</div>`;
       else if (cell.isBirthday) html = `<div class="birthday" title="Sinh nhật"><img src="banh.png" alt="Birthday Cake" style="width: 32px; height: 32px; object-fit: contain;"></div>`;
-      else if (cell.isPickup) html = `<div class="pickup${cell.isActive?' active':''}" title="${cell.isActive?'Điểm mục tiêu':'Pickup'}"><img src="building.png" alt="Building" style="width: 28px; height: 28px; object-fit: contain;"></div>`;
-      else if (cell.isDropoff) html = `<div class="dropoff${cell.isActive?' active':''}" title="${cell.isActive?'Điểm mục tiêu':'Drop-off'}"><img src="building.png" alt="Building" style="width: 28px; height: 28px; object-fit: contain;"></div>`;
+      else if (cell.isPickup) html = `<div class="pickup${cell.isActive?' active':''}" title="${cell.isActive?'Số đơn đã hoàn thành mục tiêu':'Pickup'}"><img src="building.png" alt="Building" style="width: 28px; height: 28px; object-fit: contain;"></div>`;
+      else if (cell.isDropoff) html = `<div class="dropoff${cell.isActive?' active':''}" title="${cell.isActive?'Số đơn đã hoàn thành mục tiêu':'Drop-off'}"><img src="building.png" alt="Building" style="width: 28px; height: 28px; object-fit: contain;"></div>`;
       if(driverPos.x === x && driverPos.y === y) {
         html = `<div class="driver" title="Tài xế AhaMove"><img src="xe.png" alt="Vehicle" style="width: 32px; height: 32px; object-fit: contain;"></div>`;
       }
@@ -1074,8 +1074,8 @@ function drawGrid() {
 }
 
 function updateInfo() {
-  document.querySelector('.score').innerText = `Điểm: ${score}`;
-  document.querySelector('.lives').innerText = `Nhà còn: ${TOTAL_STOP - inactiveBuildings.length}`;
+  document.querySelector('.score').innerText = `Số đơn đã hoàn thành: ${score}`;
+  document.querySelector('.lives').innerText = `Số đơn cần hoàn thành: ${TOTAL_STOP - inactiveBuildings.length}`;
   document.querySelector('.question-level').innerText = `Độ khó: ${difficulty}`;
 }
 
@@ -1089,9 +1089,13 @@ function updateQuestionSetInfo() {
   const easy = questions.filter(q => q.level <= 2).length;
   const hard = questions.filter(q => q.level >= 3).length;
   
-  document.getElementById('totalQuestions').textContent = total;
-  document.getElementById('easyQuestions').textContent = easy;
-  document.getElementById('hardQuestions').textContent = hard;
+  document.getElementById('totalQuestions1').textContent = "Bấm tạo mới";
+  document.getElementById('totalQuestions2').textContent = "Chỉnh các thông số liên quan đến LLM";
+  document.getElementById('totalQuestions3').textContent = "Bấm nút ạo câu hỏi";
+
+  //document.getElementById('totalQuestions').textContent = "Bấm tạo mới";
+  // document.getElementById('easyQuestions').textContent = easy;
+  // document.getElementById('hardQuestions').textContent = hard;
   
   // Update toggle button
   const toggleBtn = document.getElementById('toggleLlmBtn');
@@ -1333,7 +1337,7 @@ function answerBuildingAction(cell) {
       inactiveBuildings.push({x: cell.x, y: cell.y});
     }
     difficulty = Math.max(1,difficulty-1);
-    showMsg(1800,"❌ Sai! Điểm này bị vô hiệu hóa! Đơn sẽ được gán ở nơi xa nhất.");
+    showMsg(1800,"❌ Sai! Số đơn đã hoàn thành này bị vô hiệu hóa! Đơn sẽ được gán ở nơi xa nhất.");
     reassignOrderFarthest();
     if(inactiveBuildings.length >= TOTAL_STOP-3) {
       setTimeout(()=>showEnd('game-over'),400);
@@ -1344,7 +1348,7 @@ function answerBuildingAction(cell) {
     lastChosenCell=null; lockAction = false; drawGrid();
     if (!gameOver && !gameWin) {
       if(currAnswerBuildings.length===0)
-        document.querySelector('.msg').innerText = "🎯 Hãy di chuyển đến điểm pickup/dropoff được đánh dấu để nhận câu hỏi tiếp theo!";
+        document.querySelector('.msg').innerText = "🎯 Hãy di chuyển đến Số đơn đã hoàn thành pickup/dropoff được đánh dấu để nhận câu hỏi tiếp theo!";
     }
   }, 1100);
 }
@@ -1385,9 +1389,9 @@ function showEnd(type) {
     stats = `
       <div class="modal-stats">
         📊 <strong>Thống kê cuối game:</strong><br>
-        🏆 Điểm số: ${score}/${TOTAL_STOP}<br>
+        🏆 Số đơn đã hoàn thành số: ${score}/${TOTAL_STOP}<br>
         📈 Độ khó đạt được: ${difficulty}/5<br>
-        🏢 Toà nhà còn lại: ${TOTAL_STOP - inactiveBuildings.length}
+        🏢 Toà Số đơn cần hoàn thành lại: ${TOTAL_STOP - inactiveBuildings.length}
       </div>
     `;
     gameOver = true;
@@ -1398,7 +1402,7 @@ function showEnd(type) {
     stats = `
       <div class="modal-stats">
         🏆 <strong>Kết quả xuất sắc:</strong><br>
-        ⭐ Điểm số: ${score}/${TOTAL_STOP}<br>
+        ⭐ Số đơn đã hoàn thành số: ${score}/${TOTAL_STOP}<br>
         🚀 Độ khó cuối: ${difficulty}/5<br>
         🎯 Tỷ lệ thành công: 100%
       </div>
@@ -1469,7 +1473,7 @@ function gameInit() {
   updateQuestionSetInfo();
   drawGrid();
   document.getElementById('endScene').innerHTML='';
-  showMsg(3000, "🚚 Chào mừng! Hãy di chuyển đến điểm pickup/dropoff được đánh dấu để bắt đầu!");
+  showMsg(3000, "🚚 Chào mừng! Hãy di chuyển đến Số đơn đã hoàn thành pickup/dropoff được đánh dấu để bắt đầu!");
 }
 
 document.getElementById('btnReset').onclick = gameInit;
@@ -1786,13 +1790,13 @@ function showEnd(type) {
     stats = `
       <div class="modal-stats">
         📊 <strong>Thống kê game này:</strong><br>
-        🏆 Điểm số: ${score}/${TOTAL_STOP}<br>
+        🏆 Số đơn đã hoàn thành số: ${score}/${TOTAL_STOP}<br>
         📈 Độ khó đạt được: ${difficulty}/5<br>
-        🏢 Toà nhà còn lại: ${TOTAL_STOP - inactiveBuildings.length}<br><br>
+        🏢 Toà Số đơn cần hoàn thành lại: ${TOTAL_STOP - inactiveBuildings.length}<br><br>
         📈 <strong>Thống kê tổng thể:</strong><br>
         🎮 Số game đã chơi: ${gameStats.gamesPlayed}<br>
-        🏅 Điểm cao nhất: ${gameStats.bestScore}<br>
-        📊 Điểm trung bình: ${avgScore}<br>
+        🏅 Số đơn đã hoàn thành cao nhất: ${gameStats.bestScore}<br>
+        📊 Số đơn đã hoàn thành trung bình: ${avgScore}<br>
         🎯 Độ chính xác: ${accuracy}%
       </div>
     `;
@@ -1804,13 +1808,13 @@ function showEnd(type) {
     stats = `
       <div class="modal-stats">
         🏆 <strong>Kết quả xuất sắc:</strong><br>
-        ⭐ Điểm số: ${score}/${TOTAL_STOP}<br>
+        ⭐ Số đơn đã hoàn thành số: ${score}/${TOTAL_STOP}<br>
         🚀 Độ khó cuối: ${difficulty}/5<br>
         🎯 Tỷ lệ thành công: 100%<br><br>
         📈 <strong>Thống kê tổng thể:</strong><br>
         🎮 Số game đã chơi: ${gameStats.gamesPlayed}<br>
-        🏅 Điểm cao nhất: ${gameStats.bestScore}<br>
-        📊 Điểm trung bình: ${avgScore}<br>
+        🏅 Số đơn đã hoàn thành cao nhất: ${gameStats.bestScore}<br>
+        📊 Số đơn đã hoàn thành trung bình: ${avgScore}<br>
         🎯 Độ chính xác: ${accuracy}%
       </div>
     `;
@@ -1870,7 +1874,7 @@ function answerBuildingAction(cell) {
       inactiveBuildings.push({x: cell.x, y: cell.y});
     }
     difficulty = Math.max(1,difficulty-1);
-    showMsg(1800,"❌ Sai! Điểm này bị vô hiệu hóa! Đơn sẽ được gán ở nơi xa nhất.");
+    showMsg(1800,"❌ Sai! Số đơn đã hoàn thành này bị vô hiệu hóa! Đơn sẽ được gán ở nơi xa nhất.");
     reassignOrderFarthest();
     if(inactiveBuildings.length >= TOTAL_STOP-3) {
       setTimeout(()=>showEnd('game-over'),400);
@@ -1881,7 +1885,7 @@ function answerBuildingAction(cell) {
     lastChosenCell=null; lockAction = false; drawGrid();
     if (!gameOver && !gameWin) {
       if(currAnswerBuildings.length===0)
-        document.querySelector('.msg').innerText = "🎯 Hãy di chuyển đến điểm pickup/dropoff được đánh dấu để nhận câu hỏi tiếp theo!";
+        document.querySelector('.msg').innerText = "🎯 Hãy di chuyển đến Số đơn đã hoàn thành pickup/dropoff được đánh dấu để nhận câu hỏi tiếp theo!";
     }
   }, 1100);
 }
@@ -1896,7 +1900,7 @@ console.log(`
 • Ctrl+R: Khởi động lại game
 
 🎮 Hướng dẫn chơi:
-1. Di chuyển đến điểm pickup/dropoff có đánh dấu
+1. Di chuyển đến Số đơn đã hoàn thành pickup/dropoff có đánh dấu
 2. Trả lời câu hỏi bằng cách di chuyển đến đáp án A/B/C
 3. Hoàn thành ${TOTAL_STOP} đơn hàng để thắng game
 
